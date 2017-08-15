@@ -63,7 +63,6 @@ type Exec struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
 	ContOnError bool
-	timeRun     int
 	hasRun      bool
 	subscribers map[string]notifyAction
 }
@@ -72,6 +71,11 @@ type notifyAction struct {
 	task   Runner
 	action Action
 	props  Properties
+}
+
+type Identifier interface {
+	// should be a unique name for the task
+	ID() string
 }
 
 type Notifier interface {
@@ -83,13 +87,9 @@ type Registerer interface {
 }
 
 type Runner interface {
+	Identifier
 	Notifier
 	Run(props Properties, actions ...Action) Runner
-	TimeRunner
-}
-
-type TimeRunner interface {
-	TimeRun() int
 }
 
 func (a Action) name() (string, bool) {
@@ -142,7 +142,6 @@ func (e *Exec) runAction(
 
 	var err error
 	e.hasRun, err = f(props)
-	e.timeRun = time.Now().Nanosecond()
 	e.handleError(e.hasRun, err)
 
 	if e.hasRun {
@@ -153,15 +152,11 @@ func (e *Exec) runAction(
 
 }
 
-func (e *Exec) TimeRun() int {
-	return e.timeRun
-}
-
 func (e *Exec) DelayNotify(subscriber Runner, a Action, p Properties) {
 	if e.subscribers == nil {
 		e.subscribers = map[string]notifyAction{}
 	}
-	e.subscribers[fmt.Sprintf("%s %d", subscriber, subscriber.TimeRun)] = notifyAction{task: subscriber, action: a, props: p}
+	e.subscribers[subscriber.ID()] = notifyAction{task: subscriber, action: a, props: p}
 }
 
 func (e *Exec) Notify() {

@@ -8,6 +8,7 @@ import (
 )
 
 type Directory struct {
+	Name  string
 	Path  string
 	Group string
 	Owner string
@@ -27,6 +28,10 @@ func (d Directory) Run(props task.Properties, runActions ...task.Action) task.Ru
 	}
 	d.Exec.RunActions(&d, regActions, runActions, props)
 	return &d
+}
+
+func (d Directory) ID() string {
+	return d.Name
 }
 
 func (d Directory) String() string {
