@@ -21,7 +21,7 @@ func (d Directory) Register(x task.Registerer, runActions ...task.Action) Direct
 	return d
 }
 
-func (d Directory) Run(props task.Properties, runActions ...task.Action) task.Runner {
+func (d Directory) Run(props task.Properties, runActions ...task.Action) task.Task {
 	regActions := task.ActionMethods{
 		task.Create: d.create,
 		task.Remove: d.remove,

@@ -68,7 +68,7 @@ type Exec struct {
 }
 
 type notifyAction struct {
-	task   Runner
+	task   Task
 	action Action
 	props  Properties
 }
@@ -83,13 +83,17 @@ type Notifier interface {
 }
 
 type Registerer interface {
-	Register(r Runner, action ...Action)
+	Register(r Task, action ...Action)
 }
 
 type Runner interface {
+	Run(props Properties, actions ...Action) Task
+}
+
+type Task interface {
 	Identifier
 	Notifier
-	Run(props Properties, actions ...Action) Runner
+	Runner
 }
 
 func (a Action) name() (string, bool) {
@@ -111,7 +115,7 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 }
 
 func (e *Exec) RunActions(
-	task Runner,
+	task Task,
 	regActions ActionMethods,
 	runActions []Action,
 	props Properties) {
@@ -128,7 +132,7 @@ func (e *Exec) RunActions(
 }
 
 func (e *Exec) runAction(
-	task Runner,
+	task Task,
 	regActions ActionMethods,
 	a Action,
 	props Properties) {
@@ -152,7 +156,7 @@ func (e *Exec) runAction(
 
 }
 
-func (e *Exec) DelayNotify(subscriber Runner, a Action, p Properties) {
+func (e *Exec) DelayNotify(subscriber Task, a Action, p Properties) {
 	if e.subscribers == nil {
 		e.subscribers = map[string]notifyAction{}
 	}
@@ -168,11 +172,11 @@ func (e *Exec) Notify() {
 	}
 }
 
-func (e *Exec) notRun(r Runner, a Action, t time.Time) {
+func (e *Exec) notRun(r Task, a Action, t time.Time) {
 	e.info(fmt.Sprintf("%s %s %8s %10s\n", r, a, "Not-Run", time.Since(t)))
 }
 
-func (e *Exec) didRun(r Runner, a Action, t time.Time) {
+func (e *Exec) didRun(r Task, a Action, t time.Time) {
 	e.info(fmt.Sprintf("%s %s %8s %10s\n", r, a, "Did-Run", time.Since(t)))
 }
 

@@ -9,11 +9,11 @@ type Role struct {
 }
 
 type ActionSet struct {
-	Task    task.Runner
+	Task    task.Task
 	Actions []task.Action
 }
 
-func (r *Role) Register(x task.Runner, a ...task.Action) {
+func (r *Role) Register(x task.Task, a ...task.Action) {
 	if r.tasks == nil {
 		r.tasks = []ActionSet{}
 	}
