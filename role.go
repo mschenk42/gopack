@@ -29,7 +29,7 @@ func (r *Role) Run(p task.Properties) {
 
 func (r *Role) Notify() {
 	for _, t := range r.tasks {
-		task.Notifier(t.Task).Notify()
+		t.Task.Notify()
 	}
 }
 
