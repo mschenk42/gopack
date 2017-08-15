@@ -16,8 +16,8 @@ type Directory struct {
 	task.Exec
 }
 
-func (d Directory) Register(x task.Registerer, runActions ...task.Action) Directory {
-	x.Register(&d, runActions...)
+func (d Directory) Register(r task.Registerer, runActions ...task.Action) Directory {
+	r.Register(&d, runActions...)
 	return d
 }
 

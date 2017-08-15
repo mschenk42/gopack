@@ -156,11 +156,11 @@ func (e *Exec) runAction(
 
 }
 
-func (e *Exec) DelayNotify(subscriber Task, a Action, p Properties) {
+func (e *Exec) DelayNotify(subscriber Task, action Action, props Properties) {
 	if e.subscribers == nil {
 		e.subscribers = map[string]notifyAction{}
 	}
-	e.subscribers[subscriber.ID()] = notifyAction{task: subscriber, action: a, props: p}
+	e.subscribers[subscriber.ID()] = notifyAction{task: subscriber, action: action, props: props}
 }
 
 func (e *Exec) Notify() {
@@ -172,12 +172,12 @@ func (e *Exec) Notify() {
 	}
 }
 
-func (e *Exec) notRun(r Task, a Action, t time.Time) {
-	e.info(fmt.Sprintf("%s %s %8s %10s\n", r, a, "Not-Run", time.Since(t)))
+func (e *Exec) notRun(t Task, action Action, startTime time.Time) {
+	e.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime)))
 }
 
-func (e *Exec) didRun(r Task, a Action, t time.Time) {
-	e.info(fmt.Sprintf("%s %s %8s %10s\n", r, a, "Did-Run", time.Since(t)))
+func (e *Exec) didRun(t Task, action Action, startTime time.Time) {
+	e.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime)))
 }
 
 func (e *Exec) canRun(props Properties) bool {

@@ -8,24 +8,24 @@ type RunBook struct {
 	roles []Role
 }
 
-func (r *RunBook) Register(x Role) {
+func (r *RunBook) Register(role Role) {
 	if r.roles == nil {
 		r.roles = []Role{}
 	}
-	r.roles = append(r.roles, x)
+	r.roles = append(r.roles, role)
 }
 
-func (r *RunBook) Run(p task.Properties) {
-	r.Props.Merge(p)
-	for _, x := range r.roles {
-		x.Run(r.Props)
+func (r *RunBook) Run(props task.Properties) {
+	r.Props.Merge(props)
+	for _, role := range r.roles {
+		role.Run(r.Props)
 	}
 	r.Notify()
 }
 
 func (r *RunBook) Notify() {
-	for _, x := range r.roles {
-		x.Notify()
+	for _, role := range r.roles {
+		role.Notify()
 	}
 }
 

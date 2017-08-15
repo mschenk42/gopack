@@ -4,8 +4,8 @@ import "fmt"
 
 type Properties map[string]interface{}
 
-func (p *Properties) Merge(x Properties) {
-	for k, v := range x {
+func (p *Properties) Merge(props Properties) {
+	for k, v := range props {
 		(*p)[k] = v
 	}
 }
@@ -18,13 +18,13 @@ func (p *Properties) Float() float64 {
 	return 0
 }
 
-func (p *Properties) Str(k string) string {
-	v := (*p)[k]
+func (p *Properties) Str(key string) string {
+	v := (*p)[key]
 	switch v.(type) {
 	case string:
 		return v.(string)
 	default:
-		handleError(fmt.Errorf("unable to convert %s to string", k))
+		handleError(fmt.Errorf("unable to convert %s to string", key))
 	}
 	return ""
 }
