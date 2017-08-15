@@ -59,7 +59,7 @@ type ActionFunc func(p Properties) (bool, error)
 type ActionMethods map[Action]ActionFunc
 type GuardFunc func(p Properties) (bool, error)
 
-type Exec struct {
+type Base struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
 	ContOnError bool
@@ -114,24 +114,24 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 	return f, found
 }
 
-func (e *Exec) RunActions(
+func (b *Base) RunActions(
 	task Task,
 	regActions ActionMethods,
 	runActions []Action,
 	props Properties) {
 
 	t := time.Now()
-	if !e.canRun(props) {
-		e.notRun(task, Nothing, t)
+	if !b.canRun(props) {
+		b.notRun(task, Nothing, t)
 		return
 	}
 
 	for _, a := range runActions {
-		e.runAction(task, regActions, a, props)
+		b.runAction(task, regActions, a, props)
 	}
 }
 
-func (e *Exec) runAction(
+func (b *Base) runAction(
 	task Task,
 	regActions ActionMethods,
 	a Action,
@@ -140,72 +140,72 @@ func (e *Exec) runAction(
 	t := time.Now()
 	f, found := regActions.actionFunc(a)
 	if !found {
-		e.handleError(false, fmt.Errorf("%s %s", a, ErrUnknownAction))
+		b.handleError(false, fmt.Errorf("%s %s", a, ErrUnknownAction))
 		return
 	}
 
 	var err error
-	e.hasRun, err = f(props)
-	e.handleError(e.hasRun, err)
+	b.hasRun, err = f(props)
+	b.handleError(b.hasRun, err)
 
-	if e.hasRun {
-		e.didRun(task, a, t)
+	if b.hasRun {
+		b.didRun(task, a, t)
 	} else {
-		e.notRun(task, a, t)
+		b.notRun(task, a, t)
 	}
 
 }
 
-func (e *Exec) DelayNotify(subscriber Task, action Action, props Properties) {
-	if e.subscribers == nil {
-		e.subscribers = map[string]notifyAction{}
+func (b *Base) DelayNotify(subscriber Task, action Action, props Properties) {
+	if b.subscribers == nil {
+		b.subscribers = map[string]notifyAction{}
 	}
-	e.subscribers[subscriber.ID()] = notifyAction{task: subscriber, action: action, props: props}
+	b.subscribers[subscriber.ID()] = notifyAction{task: subscriber, action: action, props: props}
 }
 
-func (e *Exec) Notify() {
-	if !e.hasRun {
+func (b *Base) Notify() {
+	if !b.hasRun {
 		return
 	}
-	for _, s := range e.subscribers {
+	for _, s := range b.subscribers {
 		s.task.Run(s.props, s.action)
 	}
 }
 
-func (e *Exec) notRun(t Task, action Action, startTime time.Time) {
-	e.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime)))
+func (b *Base) notRun(t Task, action Action, startTime time.Time) {
+	b.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime)))
 }
 
-func (e *Exec) didRun(t Task, action Action, startTime time.Time) {
-	e.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime)))
+func (b *Base) didRun(t Task, action Action, startTime time.Time) {
+	b.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime)))
 }
 
-func (e *Exec) canRun(props Properties) bool {
+func (b *Base) canRun(props Properties) bool {
 	var err error
 	run := true
 	switch {
-	case e.OnlyIf != nil:
-		run, err = e.OnlyIf(props)
-		e.handleError(false, err)
-	case e.NotIf != nil:
-		run, err = e.NotIf(props)
+	case b.OnlyIf != nil:
+		run, err = b.OnlyIf(props)
+		b.handleError(false, err)
+	case b.NotIf != nil:
+		run, err = b.NotIf(props)
 		run = !run
-		e.handleError(false, err)
+		b.handleError(false, err)
 	}
 	return run
 }
 
-func (e *Exec) info(s string) {
+func (b *Base) info(s string) {
 	fmt.Fprintf(Stdout, s)
 }
 
-func (e *Exec) error(s string) {
+func (b *Base) error(s string) {
 	fmt.Fprintf(Stderr, s)
 }
 
-func (e *Exec) handleError(hasRun bool, err error) {
+func (b *Base) handleError(hasRun bool, err error) {
 	if err != nil {
-		if !e.ContOnError {
+		if !b.ContOnError {
 			panic(err)
 		}
 		fmt.Fprintf(Stderr, "%s\n", err)

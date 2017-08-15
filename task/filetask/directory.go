@@ -13,7 +13,7 @@ type Directory struct {
 	Group string
 	Owner string
 	Perm  os.FileMode
-	task.Exec
+	task.Base
 }
 
 func (d Directory) Register(r task.Registerer, runActions ...task.Action) Directory {
@@ -26,7 +26,7 @@ func (d Directory) Run(props task.Properties, runActions ...task.Action) task.Ta
 		task.Create: d.create,
 		task.Remove: d.remove,
 	}
-	d.Exec.RunActions(&d, regActions, runActions, props)
+	d.Base.RunActions(&d, regActions, runActions, props)
 	return &d
 }
 
