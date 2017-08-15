@@ -63,6 +63,7 @@ type Exec struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
 	ContOnError bool
+	timeRun     int
 	hasRun      bool
 	subscribers map[string]notifyAction
 }
@@ -84,6 +85,11 @@ type Registerer interface {
 type Runner interface {
 	Notifier
 	Run(props Properties, actions ...Action) Runner
+	TimeRunner
+}
+
+type TimeRunner interface {
+	TimeRun() int
 }
 
 func (a Action) name() (string, bool) {
@@ -117,9 +123,7 @@ func (e *Exec) RunActions(
 	}
 
 	for _, a := range runActions {
-		if e.runAction(task, regActions, a, props) {
-			e.hasRun = true
-		}
+		e.runAction(task, regActions, a, props)
 	}
 }
 
@@ -127,32 +131,37 @@ func (e *Exec) runAction(
 	task Runner,
 	regActions ActionMethods,
 	a Action,
-	props Properties) bool {
+	props Properties) {
 
 	t := time.Now()
 	f, found := regActions.actionFunc(a)
 	if !found {
 		e.handleError(false, fmt.Errorf("%s %s", a, ErrUnknownAction))
-		return false
+		return
 	}
 
-	hasRun, err := f(props)
-	e.handleError(hasRun, err)
+	var err error
+	e.hasRun, err = f(props)
+	e.timeRun = time.Now().Nanosecond()
+	e.handleError(e.hasRun, err)
 
-	if hasRun {
+	if e.hasRun {
 		e.didRun(task, a, t)
 	} else {
 		e.notRun(task, a, t)
 	}
 
-	return hasRun
+}
+
+func (e *Exec) TimeRun() int {
+	return e.timeRun
 }
 
 func (e *Exec) DelayNotify(subscriber Runner, a Action, p Properties) {
 	if e.subscribers == nil {
 		e.subscribers = map[string]notifyAction{}
 	}
-	e.subscribers[fmt.Sprintf("%s", subscriber)] = notifyAction{task: subscriber, action: a, props: p}
+	e.subscribers[fmt.Sprintf("%s %d", subscriber, subscriber.TimeRun)] = notifyAction{task: subscriber, action: a, props: p}
 }
 
 func (e *Exec) Notify() {
