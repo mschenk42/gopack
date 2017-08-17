@@ -63,37 +63,15 @@ type Base struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
 	ContOnError bool
-	hasRun      bool
-	subscribers map[string]notifyAction
-}
-
-type notifyAction struct {
-	task   Task
-	action Action
-	props  Properties
-}
-
-type Identifier interface {
-	// should be a unique name for the task
-	ID() string
-}
-
-type Notifier interface {
-	Notify()
-}
-
-type Registerer interface {
-	Register(r Task, action ...Action)
 }
 
 type Runner interface {
-	Run(props Properties, actions ...Action) Task
+	Run(props Properties, actions ...Action) bool
 }
 
 type Task interface {
-	Identifier
-	Notifier
 	Runner
+	fmt.Stringer
 }
 
 func (a Action) name() (string, bool) {
@@ -114,73 +92,61 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 	return f, found
 }
 
-func (b *Base) RunActions(
-	task Task,
-	regActions ActionMethods,
+func (b Base) RunActions(
+	task Task, regActions ActionMethods,
 	runActions []Action,
-	props Properties) {
+	props Properties) bool {
 
+	hasRun := false
 	t := time.Now()
 	if !b.canRun(props) {
 		b.notRun(task, Nothing, t)
-		return
+		return hasRun
 	}
 
 	for _, a := range runActions {
-		b.runAction(task, regActions, a, props)
+		if b.runAction(task, regActions, a, props) {
+			hasRun = true
+		}
 	}
+
+	return hasRun
 }
 
-func (b *Base) runAction(
-	task Task,
-	regActions ActionMethods,
+func (b Base) runAction(
+	task Task, regActions ActionMethods,
 	a Action,
-	props Properties) {
+	props Properties) bool {
 
+	hasRun := false
 	t := time.Now()
 	f, found := regActions.actionFunc(a)
 	if !found {
 		b.handleError(false, fmt.Errorf("%s %s", a, ErrUnknownAction))
-		return
+		return hasRun
 	}
 
-	var err error
-	b.hasRun, err = f(props)
-	b.handleError(b.hasRun, err)
+	hasRun, err := f(props)
+	b.handleError(hasRun, err)
 
-	if b.hasRun {
+	if hasRun {
 		b.didRun(task, a, t)
 	} else {
 		b.notRun(task, a, t)
 	}
 
+	return hasRun
 }
 
-func (b *Base) DelayNotify(subscriber Task, action Action, props Properties) {
-	if b.subscribers == nil {
-		b.subscribers = map[string]notifyAction{}
-	}
-	b.subscribers[subscriber.ID()] = notifyAction{task: subscriber, action: action, props: props}
-}
-
-func (b *Base) Notify() {
-	if !b.hasRun {
-		return
-	}
-	for _, s := range b.subscribers {
-		s.task.Run(s.props, s.action)
-	}
-}
-
-func (b *Base) notRun(t Task, action Action, startTime time.Time) {
+func (b Base) notRun(t Task, action Action, startTime time.Time) {
 	b.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime)))
 }
 
-func (b *Base) didRun(t Task, action Action, startTime time.Time) {
+func (b Base) didRun(t Task, action Action, startTime time.Time) {
 	b.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime)))
 }
 
-func (b *Base) canRun(props Properties) bool {
+func (b Base) canRun(props Properties) bool {
 	var err error
 	run := true
 	switch {
@@ -195,15 +161,15 @@ func (b *Base) canRun(props Properties) bool {
 	return run
 }
 
-func (b *Base) info(s string) {
+func (b Base) info(s string) {
 	fmt.Fprintf(Stdout, s)
 }
 
-func (b *Base) error(s string) {
+func (b Base) error(s string) {
 	fmt.Fprintf(Stderr, s)
 }
 
-func (b *Base) handleError(hasRun bool, err error) {
+func (b Base) handleError(hasRun bool, err error) {
 	if err != nil {
 		if !b.ContOnError {
 			panic(err)

@@ -16,22 +16,12 @@ type Directory struct {
 	task.Base
 }
 
-func (d Directory) Register(r task.Registerer, runActions ...task.Action) Directory {
-	r.Register(&d, runActions...)
-	return d
-}
-
-func (d Directory) Run(props task.Properties, runActions ...task.Action) task.Task {
+func (d Directory) Run(props task.Properties, runActions ...task.Action) bool {
 	regActions := task.ActionMethods{
 		task.Create: d.create,
 		task.Remove: d.remove,
 	}
-	d.Base.RunActions(&d, regActions, runActions, props)
-	return &d
-}
-
-func (d Directory) ID() string {
-	return d.Name
+	return d.Base.RunActions(&d, regActions, runActions, props)
 }
 
 func (d Directory) String() string {

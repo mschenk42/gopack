@@ -20,13 +20,6 @@ func (r *RunBook) Run(props task.Properties) {
 	for _, role := range r.roles {
 		role.Run(r.Props)
 	}
-	r.Notify()
-}
-
-func (r *RunBook) Notify() {
-	for _, role := range r.roles {
-		role.Notify()
-	}
 }
 
 func (r *RunBook) handleError(err error) {
