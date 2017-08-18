@@ -3,9 +3,15 @@ package task
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"time"
 )
+
+func init() {
+	LogInfo = log.New(os.Stdout, "INFO: ", 0)
+	LogErr = log.New(os.Stderr, "ERROR: ", 0)
+}
 
 const (
 	Add Action = iota
@@ -50,8 +56,8 @@ var (
 
 	ErrUnknownAction = errors.New("action unknown")
 
-	Stdout *os.File = os.Stdout
-	Stderr *os.File = os.Stderr
+	LogInfo *log.Logger
+	LogErr  *log.Logger
 )
 
 type Action int
@@ -122,12 +128,12 @@ func (b Base) runAction(
 	t := time.Now()
 	f, found := regActions.actionFunc(a)
 	if !found {
-		b.handleError(false, fmt.Errorf("%s %s", a, ErrUnknownAction))
+		b.handleError(fmt.Errorf("%s %s", a, ErrUnknownAction))
 		return hasRun
 	}
 
 	hasRun, err := f(props)
-	b.handleError(hasRun, err)
+	b.handleError(err)
 
 	if hasRun {
 		b.didRun(task, a, t)
@@ -139,11 +145,11 @@ func (b Base) runAction(
 }
 
 func (b Base) notRun(t Task, action Action, startTime time.Time) {
-	b.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime)))
+	LogInfo.Printf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime))
 }
 
 func (b Base) didRun(t Task, action Action, startTime time.Time) {
-	b.info(fmt.Sprintf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime)))
+	LogInfo.Printf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime))
 }
 
 func (b Base) canRun(props Properties) bool {
@@ -152,28 +158,20 @@ func (b Base) canRun(props Properties) bool {
 	switch {
 	case b.OnlyIf != nil:
 		run, err = b.OnlyIf(props)
-		b.handleError(false, err)
+		b.handleError(err)
 	case b.NotIf != nil:
 		run, err = b.NotIf(props)
 		run = !run
-		b.handleError(false, err)
+		b.handleError(err)
 	}
 	return run
 }
 
-func (b Base) info(s string) {
-	fmt.Fprintf(Stdout, s)
-}
-
-func (b Base) error(s string) {
-	fmt.Fprintf(Stderr, s)
-}
-
-func (b Base) handleError(hasRun bool, err error) {
-	if err != nil {
-		if !b.ContOnError {
-			panic(err)
-		}
-		fmt.Fprintf(Stderr, "%s\n", err)
+func (b Base) handleError(err error) {
+	switch {
+	case err == nil:
+		return
+	case !b.ContOnError:
+		LogErr.Panic(err)
 	}
 }

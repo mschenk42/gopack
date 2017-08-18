@@ -1,6 +1,8 @@
 package mincfg
 
-import "github.com/mschenk42/mincfg/task"
+import (
+	"github.com/mschenk42/mincfg/task"
+)
 
 type RunBook struct {
 	Name  string

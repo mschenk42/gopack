@@ -1,6 +1,8 @@
 package mincfg
 
-import "github.com/mschenk42/mincfg/task"
+import (
+	"github.com/mschenk42/mincfg/task"
+)
 
 type Role struct {
 	Name         string
@@ -60,10 +62,4 @@ func (r *Role) Run(props task.Properties) {
 		}
 	}
 
-}
-
-func (r *Role) handleError(err error) {
-	if err != nil {
-		panic(err)
-	}
 }

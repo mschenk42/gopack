@@ -1,6 +1,9 @@
 package mincfg
 
 import (
+	"bytes"
+	"fmt"
+	"log"
 	"testing"
 
 	"github.com/mschenk42/mincfg/task"
@@ -106,8 +109,16 @@ func TestDelayedRun(t *testing.T) {
 	r.Register(t2, task.Nothing)
 	r.DelayRun(t2, t1, task.Create)
 
+	buf := &bytes.Buffer{}
+	task.LogInfo = log.New(buf, "INFO: ", 0)
+	task.LogErr = log.New(buf, "ERROR: ", 0)
+
 	assert.NotPanics(func() { r.Run(nil) })
 	assert.Equal(len(r.tasks), 2)
+	assert.Regexp("task1.*create.*Did-Run", buf.String())
+	assert.Regexp("task2.*nothing.*Not-Run", buf.String())
+	assert.Regexp("task2.*create.*Did-Run", buf.String())
+	fmt.Println(buf.String())
 }
 
 type Task1 struct {
