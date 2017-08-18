@@ -39,6 +39,6 @@ func (p *Properties) StrMap() map[string]string {
 
 func handleError(err error) {
 	if err != nil {
-		panic(err)
+		LogErr.Panic(err)
 	}
 }

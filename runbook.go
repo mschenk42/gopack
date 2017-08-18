@@ -26,6 +26,6 @@ func (r *RunBook) Run(props task.Properties) {
 
 func (r *RunBook) handleError(err error) {
 	if err != nil {
-		panic(err)
+		LogErr.Panic(err)
 	}
 }
