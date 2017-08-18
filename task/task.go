@@ -103,10 +103,15 @@ func (b Base) RunActions(
 	runActions []Action,
 	props Properties) bool {
 
+	if len(runActions) == 0 {
+		b.handleError(fmt.Errorf("Unable to run %s, no actions specified", task))
+		return false
+	}
+
 	hasRun := false
 	t := time.Now()
 	if !b.canRun(props) {
-		b.notRun(task, Nothing, t)
+		b.notRun(task, runActions[0], t)
 		return hasRun
 	}
 
@@ -173,5 +178,7 @@ func (b Base) handleError(err error) {
 		return
 	case !b.ContOnError:
 		LogErr.Panic(err)
+	default:
+		LogErr.Println(err)
 	}
 }
