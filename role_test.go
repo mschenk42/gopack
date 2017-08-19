@@ -57,7 +57,7 @@ func TestRun(t *testing.T) {
 		task.Create,
 	)
 
-	assert.NotPanics(func() { r.Run(nil, nil) })
+	assert.NotPanics(func() { r.Run(nil) })
 	assert.Equal(len(r.tasks), 1)
 }
 
@@ -84,7 +84,7 @@ func TestMergeProps(t *testing.T) {
 		"role.prop3": "prop3",
 	}
 
-	assert.NotPanics(func() { r.Run(p, nil) })
+	assert.NotPanics(func() { r.Run(p) })
 	assert.EqualValues(
 		r.Props,
 		task.Properties{
@@ -100,7 +100,8 @@ func TestDelayedRun(t *testing.T) {
 	logger, buf := newLoggerBuffer()
 
 	r := &Role{
-		Name: "role1",
+		Name:   "role1",
+		Logger: logger,
 	}
 
 	t1 := Task1{
@@ -116,7 +117,7 @@ func TestDelayedRun(t *testing.T) {
 	r.Register(t2, task.Nothing)
 	r.DelayRun(t2, t1, task.Create)
 
-	assert.NotPanics(func() { r.Run(nil, logger) })
+	assert.NotPanics(func() { r.Run(nil) })
 	assert.Equal(len(r.tasks), 2)
 	assert.Regexp("task1.*create.*Did-Run", buf.String())
 	assert.Regexp("task2.*nothing.*Not-Run", buf.String())

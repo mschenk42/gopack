@@ -10,6 +10,7 @@ import (
 type Role struct {
 	Name         string
 	Props        task.Properties
+	Logger       *log.Logger
 	tasks        []taskActions
 	tasksDelayed []taskRunWhen
 }
@@ -43,15 +44,15 @@ func (r *Role) DelayRun(runTask, whenTask task.Task, action task.Action) {
 	)
 }
 
-func (r *Role) Run(props task.Properties, logger *log.Logger) {
-	if logger == nil {
-		logger = log.New(os.Stdout, "", 0)
+func (r *Role) Run(props task.Properties) {
+	if r.Logger == nil {
+		r.Logger = log.New(os.Stdout, "", 0)
 	}
 
 	tasksRun := []taskActions{}
 	r.Props.Merge(props)
 	for _, ta := range r.tasks {
-		if ta.task.Run(r.Props, logger, ta.actions...) {
+		if ta.task.Run(r.Props, r.Logger, ta.actions...) {
 			tasksRun = append(tasksRun, ta)
 		}
 	}
@@ -63,7 +64,7 @@ func (r *Role) Run(props task.Properties, logger *log.Logger) {
 		}
 		for _, y := range tasksRun {
 			if y.task.String() == x.whenTask.String() {
-				x.runTask.Run(props, logger, x.action)
+				x.runTask.Run(props, r.Logger, x.action)
 				tasksDelayRunned[x.runTask.String()] = true
 			}
 		}

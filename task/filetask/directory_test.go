@@ -1,6 +1,7 @@
 package filetask
 
 import (
+	"log"
 	"os"
 	"testing"
 
@@ -17,7 +18,7 @@ func TestCreateDirectory(t *testing.T) {
 		Perm: 0755,
 	}.Run(
 		nil,
-		nil,
+		log.New(os.Stdout, "", 0),
 		task.Create,
 	)
 	defer os.Remove(d)
@@ -39,7 +40,7 @@ func TestCreateExistingDirectory(t *testing.T) {
 		Perm: 0755,
 	}.Run(
 		nil,
-		nil,
+		log.New(os.Stdout, "", 0),
 		task.Create,
 	)
 
@@ -59,7 +60,7 @@ func TestRemoveDirectory(t *testing.T) {
 		Path: d,
 	}.Run(
 		nil,
-		nil,
+		log.New(os.Stdout, "", 0),
 		task.Remove,
 	)
 
@@ -78,7 +79,7 @@ func TestRemoveMissingDirectory(t *testing.T) {
 		Path: d,
 	}.Run(
 		nil,
-		nil,
+		log.New(os.Stdout, "", 0),
 		task.Remove,
 	)
 

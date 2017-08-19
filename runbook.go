@@ -8,9 +8,10 @@ import (
 )
 
 type RunBook struct {
-	Name  string
-	Props task.Properties
-	roles []Role
+	Name   string
+	Props  task.Properties
+	Logger *log.Logger
+	roles  []Role
 }
 
 func (r *RunBook) Register(role Role) {
@@ -20,13 +21,13 @@ func (r *RunBook) Register(role Role) {
 	r.roles = append(r.roles, role)
 }
 
-func (r *RunBook) Run(props task.Properties, logger *log.Logger) {
-	if logger == nil {
-		logger = log.New(os.Stdout, "", 0)
+func (r *RunBook) Run(props task.Properties) {
+	if r.Logger == nil {
+		r.Logger = log.New(os.Stdout, "", 0)
 	}
 
 	r.Props.Merge(props)
 	for _, role := range r.roles {
-		role.Run(r.Props, logger)
+		role.Run(r.Props)
 	}
 }
