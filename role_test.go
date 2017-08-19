@@ -10,6 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func newLoggerBuffer() (*log.Logger, *bytes.Buffer) {
+	buf := &bytes.Buffer{}
+	logger := log.New(buf, "", 0)
+	return logger, buf
+}
+
 func TestCreateRole(t *testing.T) {
 	assert := assert.New(t)
 
@@ -51,7 +57,7 @@ func TestRun(t *testing.T) {
 		task.Create,
 	)
 
-	assert.NotPanics(func() { r.Run(nil) })
+	assert.NotPanics(func() { r.Run(nil, nil) })
 	assert.Equal(len(r.tasks), 1)
 }
 
@@ -78,7 +84,7 @@ func TestMergeProps(t *testing.T) {
 		"role.prop3": "prop3",
 	}
 
-	assert.NotPanics(func() { r.Run(p) })
+	assert.NotPanics(func() { r.Run(p, nil) })
 	assert.EqualValues(
 		r.Props,
 		task.Properties{
@@ -91,6 +97,7 @@ func TestMergeProps(t *testing.T) {
 
 func TestDelayedRun(t *testing.T) {
 	assert := assert.New(t)
+	logger, buf := newLoggerBuffer()
 
 	r := &Role{
 		Name: "role1",
@@ -109,18 +116,7 @@ func TestDelayedRun(t *testing.T) {
 	r.Register(t2, task.Nothing)
 	r.DelayRun(t2, t1, task.Create)
 
-	logInfoSave := LogInfo
-	logErrSave := LogErr
-	defer func() {
-		LogInfo = logInfoSave
-		LogErr = logErrSave
-	}()
-
-	buf := &bytes.Buffer{}
-	task.LogInfo = log.New(buf, "INFO: ", 0)
-	task.LogErr = log.New(buf, "ERROR: ", 0)
-
-	assert.NotPanics(func() { r.Run(nil) })
+	assert.NotPanics(func() { r.Run(nil, logger) })
 	assert.Equal(len(r.tasks), 2)
 	assert.Regexp("task1.*create.*Did-Run", buf.String())
 	assert.Regexp("task2.*nothing.*Not-Run", buf.String())
@@ -133,18 +129,18 @@ type Task1 struct {
 	task.Base
 }
 
-func (t Task1) Run(props task.Properties, runActions ...task.Action) bool {
+func (t Task1) Run(props task.Properties, logger *log.Logger, runActions ...task.Action) bool {
 	regActions := task.ActionMethods{
 		task.Create: t.create,
 	}
-	return t.Base.RunActions(&t, regActions, runActions, props)
+	return t.Base.RunActions(&t, regActions, runActions, props, logger)
 }
 
 func (t Task1) String() string {
 	return t.Name
 }
 
-func (t Task1) create(props task.Properties) (bool, error) {
+func (t Task1) create(props task.Properties, logger *log.Logger) (bool, error) {
 	return true, nil
 }
 
@@ -153,22 +149,22 @@ type Task2 struct {
 	task.Base
 }
 
-func (t Task2) Run(props task.Properties, runActions ...task.Action) bool {
+func (t Task2) Run(props task.Properties, logger *log.Logger, runActions ...task.Action) bool {
 	regActions := task.ActionMethods{
 		task.Nothing: t.nothing,
 		task.Create:  t.create,
 	}
-	return t.Base.RunActions(&t, regActions, runActions, props)
+	return t.Base.RunActions(&t, regActions, runActions, props, logger)
 }
 
 func (t Task2) String() string {
 	return t.Name
 }
 
-func (t Task2) create(props task.Properties) (bool, error) {
+func (t Task2) create(props task.Properties, logger *log.Logger) (bool, error) {
 	return true, nil
 }
 
-func (t Task2) nothing(props task.Properties) (bool, error) {
+func (t Task2) nothing(props task.Properties, logger *log.Logger) (bool, error) {
 	return false, nil
 }

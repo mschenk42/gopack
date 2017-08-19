@@ -1,6 +1,9 @@
 package mincfg
 
 import (
+	"log"
+	"os"
+
 	"github.com/mschenk42/mincfg/task"
 )
 
@@ -40,11 +43,15 @@ func (r *Role) DelayRun(runTask, whenTask task.Task, action task.Action) {
 	)
 }
 
-func (r *Role) Run(props task.Properties) {
+func (r *Role) Run(props task.Properties, logger *log.Logger) {
+	if logger == nil {
+		logger = log.New(os.Stdout, "", 0)
+	}
+
 	tasksRun := []taskActions{}
 	r.Props.Merge(props)
 	for _, ta := range r.tasks {
-		if ta.task.Run(r.Props, ta.actions...) {
+		if ta.task.Run(r.Props, logger, ta.actions...) {
 			tasksRun = append(tasksRun, ta)
 		}
 	}
@@ -56,10 +63,9 @@ func (r *Role) Run(props task.Properties) {
 		}
 		for _, y := range tasksRun {
 			if y.task.String() == x.whenTask.String() {
-				x.runTask.Run(props, x.action)
+				x.runTask.Run(props, logger, x.action)
 				tasksDelayRunned[x.runTask.String()] = true
 			}
 		}
 	}
-
 }

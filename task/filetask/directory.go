@@ -2,6 +2,7 @@ package filetask
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/mschenk42/mincfg/task"
@@ -16,19 +17,19 @@ type Directory struct {
 	task.Base
 }
 
-func (d Directory) Run(props task.Properties, runActions ...task.Action) bool {
+func (d Directory) Run(props task.Properties, logger *log.Logger, runActions ...task.Action) bool {
 	regActions := task.ActionMethods{
 		task.Create: d.create,
 		task.Remove: d.remove,
 	}
-	return d.Base.RunActions(&d, regActions, runActions, props)
+	return d.Base.RunActions(&d, regActions, runActions, props, logger)
 }
 
 func (d Directory) String() string {
 	return fmt.Sprintf("directory %s", d.Path)
 }
 
-func (d Directory) create(props task.Properties) (bool, error) {
+func (d Directory) create(props task.Properties, logger *log.Logger) (bool, error) {
 	x, err := d.exists()
 	switch {
 	case err != nil:
@@ -41,7 +42,7 @@ func (d Directory) create(props task.Properties) (bool, error) {
 	}
 }
 
-func (d Directory) remove(props task.Properties) (bool, error) {
+func (d Directory) remove(props task.Properties, logger *log.Logger) (bool, error) {
 	x, err := d.exists()
 	switch {
 	case err != nil:

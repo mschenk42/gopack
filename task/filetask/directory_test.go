@@ -17,6 +17,7 @@ func TestCreateDirectory(t *testing.T) {
 		Perm: 0755,
 	}.Run(
 		nil,
+		nil,
 		task.Create,
 	)
 	defer os.Remove(d)
@@ -38,6 +39,7 @@ func TestCreateExistingDirectory(t *testing.T) {
 		Perm: 0755,
 	}.Run(
 		nil,
+		nil,
 		task.Create,
 	)
 
@@ -57,6 +59,7 @@ func TestRemoveDirectory(t *testing.T) {
 		Path: d,
 	}.Run(
 		nil,
+		nil,
 		task.Remove,
 	)
 
@@ -74,6 +77,7 @@ func TestRemoveMissingDirectory(t *testing.T) {
 	Directory{
 		Path: d,
 	}.Run(
+		nil,
 		nil,
 		task.Remove,
 	)

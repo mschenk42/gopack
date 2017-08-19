@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-func init() {
-	LogInfo = log.New(os.Stdout, "INFO: ", 0)
-	LogErr = log.New(os.Stderr, "ERROR: ", 0)
-}
-
 const (
 	Add Action = iota
 	Create
@@ -55,15 +50,12 @@ var (
 	}
 
 	ErrUnknownAction = errors.New("action unknown")
-
-	LogInfo *log.Logger
-	LogErr  *log.Logger
 )
 
 type Action int
-type ActionFunc func(p Properties) (bool, error)
+type ActionFunc func(p Properties, logger *log.Logger) (bool, error)
 type ActionMethods map[Action]ActionFunc
-type GuardFunc func(p Properties) (bool, error)
+type GuardFunc func(p Properties, logger *log.Logger) (bool, error)
 
 type Base struct {
 	OnlyIf      GuardFunc
@@ -72,7 +64,7 @@ type Base struct {
 }
 
 type Runner interface {
-	Run(props Properties, actions ...Action) bool
+	Run(props Properties, logger *log.Logger, actions ...Action) bool
 }
 
 type Task interface {
@@ -101,22 +93,27 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 func (b Base) RunActions(
 	task Task, regActions ActionMethods,
 	runActions []Action,
-	props Properties) bool {
+	props Properties,
+	logger *log.Logger) bool {
+
+	if logger == nil {
+		logger = log.New(os.Stdout, "", 0)
+	}
 
 	if len(runActions) == 0 {
-		b.handleError(fmt.Errorf("Unable to run %s, no actions specified", task))
+		b.handleError(fmt.Errorf("unable to run %s, no actions specified", task), logger)
 		return false
 	}
 
 	hasRun := false
 	t := time.Now()
-	if !b.canRun(props) {
-		b.notRun(task, runActions[0], t)
+	if !b.canRun(props, logger) {
+		b.notRun(task, runActions[0], t, logger)
 		return hasRun
 	}
 
 	for _, a := range runActions {
-		if b.runAction(task, regActions, a, props) {
+		if b.runAction(task, regActions, a, props, logger) {
 			hasRun = true
 		}
 	}
@@ -127,58 +124,59 @@ func (b Base) RunActions(
 func (b Base) runAction(
 	task Task, regActions ActionMethods,
 	a Action,
-	props Properties) bool {
+	props Properties,
+	logger *log.Logger) bool {
 
 	hasRun := false
 	t := time.Now()
 	f, found := regActions.actionFunc(a)
 	if !found {
-		b.handleError(fmt.Errorf("%s %s", a, ErrUnknownAction))
+		b.handleError(fmt.Errorf("%s %s", a, ErrUnknownAction), logger)
 		return hasRun
 	}
 
-	hasRun, err := f(props)
-	b.handleError(err)
+	hasRun, err := f(props, logger)
+	b.handleError(err, logger)
 
 	if hasRun {
-		b.didRun(task, a, t)
+		b.didRun(task, a, t, logger)
 	} else {
-		b.notRun(task, a, t)
+		b.notRun(task, a, t, logger)
 	}
 
 	return hasRun
 }
 
-func (b Base) notRun(t Task, action Action, startTime time.Time) {
-	LogInfo.Printf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime))
+func (b Base) notRun(t Task, action Action, startTime time.Time, logger *log.Logger) {
+	logger.Printf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime))
 }
 
-func (b Base) didRun(t Task, action Action, startTime time.Time) {
-	LogInfo.Printf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime))
+func (b Base) didRun(t Task, action Action, startTime time.Time, logger *log.Logger) {
+	logger.Printf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime))
 }
 
-func (b Base) canRun(props Properties) bool {
+func (b Base) canRun(props Properties, logger *log.Logger) bool {
 	var err error
 	run := true
 	switch {
 	case b.OnlyIf != nil:
-		run, err = b.OnlyIf(props)
-		b.handleError(err)
+		run, err = b.OnlyIf(props, logger)
+		b.handleError(err, logger)
 	case b.NotIf != nil:
-		run, err = b.NotIf(props)
+		run, err = b.NotIf(props, logger)
 		run = !run
-		b.handleError(err)
+		b.handleError(err, logger)
 	}
 	return run
 }
 
-func (b Base) handleError(err error) {
+func (b Base) handleError(err error, logger *log.Logger) {
 	switch {
 	case err == nil:
 		return
 	case !b.ContOnError:
-		LogErr.Panic(err)
+		logger.Panic(err)
 	default:
-		LogErr.Println(err)
+		logger.Println(err)
 	}
 }
