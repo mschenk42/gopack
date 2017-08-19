@@ -1,4 +1,4 @@
-package task
+package gopack
 
 import (
 	"errors"
@@ -9,44 +9,44 @@ import (
 )
 
 const (
-	Add Action = iota
-	Create
-	Disable
-	Enable
-	Install
-	Lock
-	Nothing
-	Remove
-	Run
-	Reload
-	Restart
-	Start
-	Stop
-	Touch
-	Unlock
-	Update
-	Upgrade
+	AddAction Action = iota
+	CreateAction
+	DisableAction
+	EnableAction
+	InstallAction
+	LockAction
+	NothingAction
+	RemoveAction
+	RunAction
+	ReloadAction
+	RestartAction
+	StartAction
+	StopAction
+	TouchAction
+	UnlockAction
+	UpdateAction
+	UpgradeAction
 )
 
 var (
 	ActionNames = map[Action]string{
-		Add:     "add",
-		Create:  "create",
-		Disable: "disable",
-		Enable:  "enable",
-		Install: "install",
-		Lock:    "lock",
-		Nothing: "nothing",
-		Reload:  "reload",
-		Restart: "restart",
-		Remove:  "remove",
-		Start:   "start",
-		Stop:    "stop",
-		Run:     "run",
-		Touch:   "touch",
-		Unlock:  "unlock",
-		Update:  "update",
-		Upgrade: "upgrade",
+		AddAction:     "add",
+		CreateAction:  "create",
+		DisableAction: "disable",
+		EnableAction:  "enable",
+		InstallAction: "install",
+		LockAction:    "lock",
+		NothingAction: "nothing",
+		ReloadAction:  "reload",
+		RestartAction: "restart",
+		RemoveAction:  "remove",
+		StartAction:   "start",
+		StopAction:    "stop",
+		RunAction:     "run",
+		TouchAction:   "touch",
+		UnlockAction:  "unlock",
+		UpdateAction:  "update",
+		UpgradeAction: "upgrade",
 	}
 
 	ErrUnknownAction = errors.New("action unknown")
@@ -57,7 +57,7 @@ type ActionFunc func(p Properties, logger *log.Logger) (bool, error)
 type ActionMethods map[Action]ActionFunc
 type GuardFunc func(p Properties, logger *log.Logger) (bool, error)
 
-type Base struct {
+type BaseTask struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
 	ContOnError bool
@@ -91,7 +91,7 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 	return f, found
 }
 
-func (b Base) RunActions(
+func (b BaseTask) RunActions(
 	task Task, regActions ActionMethods,
 	runActions []Action,
 	props Properties,
@@ -126,7 +126,7 @@ func (b Base) RunActions(
 	return hasRun
 }
 
-func (b Base) runAction(
+func (b BaseTask) runAction(
 	task Task, regActions ActionMethods,
 	a Action,
 	props Properties) bool {
@@ -151,15 +151,15 @@ func (b Base) runAction(
 	return hasRun
 }
 
-func (b Base) notRun(t Task, action Action, startTime time.Time) {
-	b.Logger.Printf("%s %s %8s %10s\n", t, action, "Not-Run", time.Since(startTime))
+func (b BaseTask) notRun(t Task, action Action, startTime time.Time) {
+	b.Logger.Printf("%s %s %8s %10s\n", t, action, "[NOT RUN]", time.Since(startTime))
 }
 
-func (b Base) didRun(t Task, action Action, startTime time.Time) {
-	b.Logger.Printf("%s %s %8s %10s\n", t, action, "Did-Run", time.Since(startTime))
+func (b BaseTask) didRun(t Task, action Action, startTime time.Time) {
+	b.Logger.Printf("%s %s %8s %10s\n", t, action, "[RUN]", time.Since(startTime))
 }
 
-func (b Base) canRun(props Properties) bool {
+func (b BaseTask) canRun(props Properties) bool {
 	var err error
 	run := true
 	switch {
@@ -174,10 +174,9 @@ func (b Base) canRun(props Properties) bool {
 	return run
 }
 
-func (b Base) handleError(err error) {
+func (b BaseTask) handleError(err error) {
 	switch {
 	case err == nil:
-		return
 	case !b.ContOnError:
 		b.Logger.Panic(err)
 	default:

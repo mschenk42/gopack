@@ -1,39 +1,37 @@
-package mincfg
+package gopack
 
 import (
 	"log"
 	"os"
-
-	"github.com/mschenk42/mincfg/task"
 )
 
 type Role struct {
 	Name         string
-	Props        task.Properties
+	Props        Properties
 	Logger       *log.Logger
 	tasks        []taskActions
 	tasksDelayed []taskRunWhen
 }
 
 type taskRunWhen struct {
-	runTask  task.Task
-	whenTask task.Task
-	action   task.Action
+	runTask  Task
+	whenTask Task
+	action   Action
 }
 
 type taskActions struct {
-	task    task.Task
-	actions []task.Action
+	task    Task
+	actions []Action
 }
 
-func (r *Role) Register(t task.Task, runActions ...task.Action) {
+func (r *Role) Register(t Task, runActions ...Action) {
 	if r.tasks == nil {
 		r.tasks = []taskActions{}
 	}
 	r.tasks = append(r.tasks, taskActions{task: t, actions: runActions})
 }
 
-func (r *Role) DelayRun(runTask, whenTask task.Task, action task.Action) {
+func (r *Role) DelayRun(runTask, whenTask Task, action Action) {
 	r.tasksDelayed = append(
 		r.tasksDelayed,
 		taskRunWhen{
@@ -44,7 +42,7 @@ func (r *Role) DelayRun(runTask, whenTask task.Task, action task.Action) {
 	)
 }
 
-func (r *Role) Run(props task.Properties) {
+func (r *Role) Run(props Properties) {
 	if r.Logger == nil {
 		r.Logger = log.New(os.Stdout, "", 0)
 	}

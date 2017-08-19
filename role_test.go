@@ -1,4 +1,4 @@
-package mincfg
+package gopack
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"log"
 	"testing"
 
-	"github.com/mschenk42/mincfg/task"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +36,7 @@ func TestRegisterTask(t *testing.T) {
 		Task1{
 			Name: "task1",
 		},
-		task.Create,
+		CreateAction,
 	)
 
 	assert.Equal(len(r.tasks), 1)
@@ -54,7 +53,7 @@ func TestRun(t *testing.T) {
 		Task1{
 			Name: "task1",
 		},
-		task.Create,
+		CreateAction,
 	)
 
 	assert.NotPanics(func() { r.Run(nil) })
@@ -66,7 +65,7 @@ func TestMergeProps(t *testing.T) {
 
 	r := &Role{
 		Name: "role1",
-		Props: task.Properties{
+		Props: Properties{
 			"role.prop1": "prop1",
 			"role.prop2": "prop2",
 		},
@@ -76,10 +75,10 @@ func TestMergeProps(t *testing.T) {
 		Task1{
 			Name: "task1",
 		},
-		task.Create,
+		CreateAction,
 	)
 
-	p := task.Properties{
+	p := Properties{
 		"role.prop2": "updated2",
 		"role.prop3": "prop3",
 	}
@@ -87,7 +86,7 @@ func TestMergeProps(t *testing.T) {
 	assert.NotPanics(func() { r.Run(p) })
 	assert.EqualValues(
 		r.Props,
-		task.Properties{
+		Properties{
 			"role.prop3": "prop3",
 			"role.prop1": "prop1",
 			"role.prop2": "updated2",
@@ -108,64 +107,64 @@ func TestDelayedRun(t *testing.T) {
 		Name: "task1",
 	}
 
-	r.Register(t1, task.Create)
+	r.Register(t1, CreateAction)
 
 	t2 := Task2{
 		Name: "task2",
 	}
 
-	r.Register(t2, task.Nothing)
-	r.DelayRun(t2, t1, task.Create)
+	r.Register(t2, NothingAction)
+	r.DelayRun(t2, t1, CreateAction)
 
 	assert.NotPanics(func() { r.Run(nil) })
 	assert.Equal(len(r.tasks), 2)
-	assert.Regexp("task1.*create.*Did-Run", buf.String())
-	assert.Regexp("task2.*nothing.*Not-Run", buf.String())
-	assert.Regexp("task2.*create.*Did-Run", buf.String())
+	assert.Regexp("task1.*create.*[NOT RUN]", buf.String())
+	assert.Regexp("task2.*nothing.*[RUN]", buf.String())
+	assert.Regexp("task2.*create.*[NOT RUN]", buf.String())
 	fmt.Print(buf.String())
 }
 
 type Task1 struct {
 	Name string
-	task.Base
+	BaseTask
 }
 
-func (t Task1) Run(props task.Properties, logger *log.Logger, runActions ...task.Action) bool {
-	regActions := task.ActionMethods{
-		task.Create: t.create,
+func (t Task1) Run(props Properties, logger *log.Logger, runActions ...Action) bool {
+	regActions := ActionMethods{
+		CreateAction: t.create,
 	}
-	return t.Base.RunActions(&t, regActions, runActions, props, logger)
+	return t.BaseTask.RunActions(&t, regActions, runActions, props, logger)
 }
 
 func (t Task1) String() string {
 	return t.Name
 }
 
-func (t Task1) create(props task.Properties, logger *log.Logger) (bool, error) {
+func (t Task1) create(props Properties, logger *log.Logger) (bool, error) {
 	return true, nil
 }
 
 type Task2 struct {
 	Name string
-	task.Base
+	BaseTask
 }
 
-func (t Task2) Run(props task.Properties, logger *log.Logger, runActions ...task.Action) bool {
-	regActions := task.ActionMethods{
-		task.Nothing: t.nothing,
-		task.Create:  t.create,
+func (t Task2) Run(props Properties, logger *log.Logger, runActions ...Action) bool {
+	regActions := ActionMethods{
+		NothingAction: t.nothing,
+		CreateAction:  t.create,
 	}
-	return t.Base.RunActions(&t, regActions, runActions, props, logger)
+	return t.BaseTask.RunActions(&t, regActions, runActions, props, logger)
 }
 
 func (t Task2) String() string {
 	return t.Name
 }
 
-func (t Task2) create(props task.Properties, logger *log.Logger) (bool, error) {
+func (t Task2) create(props Properties, logger *log.Logger) (bool, error) {
 	return true, nil
 }
 
-func (t Task2) nothing(props task.Properties, logger *log.Logger) (bool, error) {
+func (t Task2) nothing(props Properties, logger *log.Logger) (bool, error) {
 	return false, nil
 }

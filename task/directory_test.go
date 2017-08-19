@@ -1,11 +1,11 @@
-package filetask
+package task
 
 import (
 	"log"
 	"os"
 	"testing"
 
-	"github.com/mschenk42/mincfg/task"
+	"github.com/mschenk42/gopack"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,7 @@ func TestCreateDirectory(t *testing.T) {
 	}.Run(
 		nil,
 		log.New(os.Stdout, "", 0),
-		task.Create,
+		gopack.CreateAction,
 	)
 	defer os.Remove(d)
 
@@ -41,7 +41,7 @@ func TestCreateExistingDirectory(t *testing.T) {
 	}.Run(
 		nil,
 		log.New(os.Stdout, "", 0),
-		task.Create,
+		gopack.CreateAction,
 	)
 
 	_, err = os.Stat(d)
@@ -61,7 +61,7 @@ func TestRemoveDirectory(t *testing.T) {
 	}.Run(
 		nil,
 		log.New(os.Stdout, "", 0),
-		task.Remove,
+		gopack.RemoveAction,
 	)
 
 	_, err = os.Stat(d)
@@ -80,7 +80,7 @@ func TestRemoveMissingDirectory(t *testing.T) {
 	}.Run(
 		nil,
 		log.New(os.Stdout, "", 0),
-		task.Remove,
+		gopack.RemoveAction,
 	)
 
 	_, err = os.Stat(d)

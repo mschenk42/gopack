@@ -1,11 +1,11 @@
-package filetask
+package task
 
 import (
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/mschenk42/mincfg/task"
+	"github.com/mschenk42/gopack"
 )
 
 type Directory struct {
@@ -14,22 +14,22 @@ type Directory struct {
 	Group string
 	Owner string
 	Perm  os.FileMode
-	task.Base
+	gopack.BaseTask
 }
 
-func (d Directory) Run(props task.Properties, logger *log.Logger, runActions ...task.Action) bool {
-	regActions := task.ActionMethods{
-		task.Create: d.create,
-		task.Remove: d.remove,
+func (d Directory) Run(props gopack.Properties, logger *log.Logger, runActions ...gopack.Action) bool {
+	regActions := gopack.ActionMethods{
+		gopack.CreateAction: d.create,
+		gopack.RemoveAction: d.remove,
 	}
-	return d.Base.RunActions(&d, regActions, runActions, props, logger)
+	return d.BaseTask.RunActions(&d, regActions, runActions, props, logger)
 }
 
 func (d Directory) String() string {
 	return fmt.Sprintf("directory %s", d.Path)
 }
 
-func (d Directory) create(props task.Properties, logger *log.Logger) (bool, error) {
+func (d Directory) create(props gopack.Properties, logger *log.Logger) (bool, error) {
 	x, err := d.exists()
 	switch {
 	case err != nil:
@@ -42,7 +42,7 @@ func (d Directory) create(props task.Properties, logger *log.Logger) (bool, erro
 	}
 }
 
-func (d Directory) remove(props task.Properties, logger *log.Logger) (bool, error) {
+func (d Directory) remove(props gopack.Properties, logger *log.Logger) (bool, error) {
 	x, err := d.exists()
 	switch {
 	case err != nil:
