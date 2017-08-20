@@ -9,11 +9,12 @@ import (
 )
 
 type Directory struct {
-	Name  string
-	Path  string
-	Group string
-	Owner string
-	Perm  os.FileMode
+	Name     string
+	Path     string
+	Group    string
+	Owner    string
+	Perm     os.FileMode
+	defaults gopack.Properties
 	gopack.BaseTask
 }
 
@@ -22,6 +23,11 @@ func (d Directory) Run(props gopack.Properties, logger *log.Logger, runActions .
 		gopack.CreateAction: d.create,
 		gopack.RemoveAction: d.remove,
 	}
+
+	d.defaults = gopack.Properties{
+		"perm": 0755,
+	}
+
 	return d.BaseTask.RunActions(&d, regActions, runActions, props, logger)
 }
 

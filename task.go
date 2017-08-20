@@ -53,13 +53,14 @@ var (
 )
 
 type Action int
-type ActionFunc func(p Properties, logger *log.Logger) (bool, error)
 type ActionMethods map[Action]ActionFunc
+type ActionFunc func(p Properties, logger *log.Logger) (bool, error)
 type GuardFunc func(p Properties, logger *log.Logger) (bool, error)
 
 type BaseTask struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
+	Notify      map[Action][]func()
 	ContOnError bool
 	Logger      *log.Logger
 }
@@ -113,13 +114,14 @@ func (b BaseTask) RunActions(
 	hasRun := false
 	t := time.Now()
 	if !b.canRun(props) {
-		b.notRun(task, runActions[0], t)
+		b.logRunStatus(hasRun, task, runActions[0], t)
 		return hasRun
 	}
 
 	for _, a := range runActions {
 		if b.runAction(task, regActions, a, props) {
 			hasRun = true
+			b.notify(a)
 		}
 	}
 
@@ -141,22 +143,26 @@ func (b BaseTask) runAction(
 
 	hasRun, err := f(props, b.Logger)
 	b.handleError(err)
-
-	if hasRun {
-		b.didRun(task, a, t)
-	} else {
-		b.notRun(task, a, t)
-	}
+	b.logRunStatus(hasRun, task, a, t)
 
 	return hasRun
 }
 
-func (b BaseTask) notRun(t Task, action Action, startTime time.Time) {
-	b.Logger.Printf("%s %s %8s %10s\n", t, action, "[NOT RUN]", time.Since(startTime))
+func (b BaseTask) notify(action Action) {
+	funcs, found := b.Notify[action]
+	if found {
+		for _, f := range funcs {
+			f()
+		}
+	}
 }
 
-func (b BaseTask) didRun(t Task, action Action, startTime time.Time) {
-	b.Logger.Printf("%s %s %8s %10s\n", t, action, "[RUN]", time.Since(startTime))
+func (b BaseTask) logRunStatus(hasRun bool, t Task, action Action, startTime time.Time) {
+	status := "[NOT RUN]"
+	if hasRun {
+		status = "[RUN]"
+	}
+	b.Logger.Printf("%s %s %8s %10s\n", t, action, status, time.Since(startTime))
 }
 
 func (b BaseTask) canRun(props Properties) bool {
