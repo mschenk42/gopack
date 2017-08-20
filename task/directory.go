@@ -9,33 +9,52 @@ import (
 )
 
 type Directory struct {
-	Name     string
-	Path     string
-	Group    string
-	Owner    string
-	Perm     os.FileMode
-	defaults gopack.Properties
+	Name  string
+	Path  string
+	Group string
+	Owner string
+	Perm  os.FileMode
+
+	logger     *log.Logger
+	properties *gopack.Properties
+	defaults   *gopack.Properties
 	gopack.BaseTask
 }
 
-func (d Directory) Run(props gopack.Properties, logger *log.Logger, runActions ...gopack.Action) bool {
-	regActions := gopack.ActionMethods{
+func (d Directory) Run(props *gopack.Properties, logger *log.Logger, runActions ...gopack.Action) bool {
+	d.logger = logger
+	d.properties = props
+	d.setDefaults()
+	return d.BaseTask.RunActions(&d, d.registerActions(), runActions)
+}
+
+func (d Directory) Logger() *log.Logger {
+	return d.logger
+}
+
+func (d Directory) Properties() *gopack.Properties {
+	return d.properties
+}
+
+func (d Directory) registerActions() gopack.ActionMethods {
+	return gopack.ActionMethods{
 		gopack.CreateAction: d.create,
 		gopack.RemoveAction: d.remove,
 	}
+}
 
-	d.defaults = gopack.Properties{
-		"perm": 0755,
+func (d *Directory) setDefaults() {
+	switch {
+	case d.Perm == 0:
+		d.Perm = 0755
 	}
-
-	return d.BaseTask.RunActions(&d, regActions, runActions, props, logger)
 }
 
 func (d Directory) String() string {
 	return fmt.Sprintf("directory %s", d.Path)
 }
 
-func (d Directory) create(props gopack.Properties, logger *log.Logger) (bool, error) {
+func (d Directory) create() (bool, error) {
 	x, err := d.exists()
 	switch {
 	case err != nil:
@@ -48,7 +67,7 @@ func (d Directory) create(props gopack.Properties, logger *log.Logger) (bool, er
 	}
 }
 
-func (d Directory) remove(props gopack.Properties, logger *log.Logger) (bool, error) {
+func (d Directory) remove() (bool, error) {
 	x, err := d.exists()
 	switch {
 	case err != nil:

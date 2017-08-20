@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"time"
 )
 
@@ -54,24 +53,27 @@ var (
 
 type Action int
 type ActionMethods map[Action]ActionFunc
-type ActionFunc func(p Properties, logger *log.Logger) (bool, error)
-type GuardFunc func(p Properties, logger *log.Logger) (bool, error)
+type ActionFunc func() (bool, error)
+type GuardFunc func() (bool, error)
 
 type BaseTask struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
 	Notify      map[Action][]func()
 	ContOnError bool
-	Logger      *log.Logger
+	logger      *log.Logger
+	properties  *Properties
 }
 
 type Runner interface {
-	Run(props Properties, logger *log.Logger, actions ...Action) bool
+	Run(props *Properties, logger *log.Logger, actions ...Action) bool
 }
 
 type Task interface {
 	Runner
 	fmt.Stringer
+	Logger() *log.Logger
+	Properties() *Properties
 }
 
 func (a Action) name() (string, bool) {
@@ -92,18 +94,13 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 	return f, found
 }
 
-func (b BaseTask) RunActions(
-	task Task, regActions ActionMethods,
-	runActions []Action,
-	props Properties,
-	logger *log.Logger) bool {
+func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []Action) bool {
 
-	switch {
-	case b.Logger != nil:
-	case logger != nil:
-		b.Logger = logger
-	default:
-		b.Logger = log.New(os.Stdout, "", 0)
+	b.logger = task.Logger()
+	b.properties = task.Properties()
+
+	if b.logger == nil {
+		b.logger.Panicf("logger is nil for task %s", task)
 	}
 
 	if len(runActions) == 0 {
@@ -113,13 +110,13 @@ func (b BaseTask) RunActions(
 
 	hasRun := false
 	t := time.Now()
-	if !b.canRun(props) {
+	if !b.canRun() {
 		b.logRunStatus(hasRun, task, runActions[0], t)
 		return hasRun
 	}
 
 	for _, a := range runActions {
-		if b.runAction(task, regActions, a, props) {
+		if b.runAction(task, regActions, a) {
 			hasRun = true
 			b.notify(a)
 		}
@@ -128,20 +125,17 @@ func (b BaseTask) RunActions(
 	return hasRun
 }
 
-func (b BaseTask) runAction(
-	task Task, regActions ActionMethods,
-	a Action,
-	props Properties) bool {
-
+func (b BaseTask) runAction(task Task, regActions ActionMethods, a Action) bool {
 	hasRun := false
 	t := time.Now()
+
 	f, found := regActions.actionFunc(a)
 	if !found {
 		b.handleError(fmt.Errorf("%s %s", a, ErrUnknownAction))
 		return hasRun
 	}
 
-	hasRun, err := f(props, b.Logger)
+	hasRun, err := f()
 	b.handleError(err)
 	b.logRunStatus(hasRun, task, a, t)
 
@@ -162,18 +156,18 @@ func (b BaseTask) logRunStatus(hasRun bool, t Task, action Action, startTime tim
 	if hasRun {
 		status = "[RUN]"
 	}
-	b.Logger.Printf("%s %s %8s %10s\n", t, action, status, time.Since(startTime))
+	b.logger.Printf("%s %s %8s %10s\n", t, action, status, time.Since(startTime))
 }
 
-func (b BaseTask) canRun(props Properties) bool {
+func (b BaseTask) canRun() bool {
 	var err error
 	run := true
-	switch {
-	case b.OnlyIf != nil:
-		run, err = b.OnlyIf(props, b.Logger)
+	if b.OnlyIf != nil {
+		run, err = b.OnlyIf()
 		b.handleError(err)
-	case b.NotIf != nil:
-		run, err = b.NotIf(props, b.Logger)
+	}
+	if b.NotIf != nil {
+		run, err = b.NotIf()
 		run = !run
 		b.handleError(err)
 	}
@@ -184,8 +178,8 @@ func (b BaseTask) handleError(err error) {
 	switch {
 	case err == nil:
 	case !b.ContOnError:
-		b.Logger.Panic(err)
+		b.logger.Panic(err)
 	default:
-		b.Logger.Println(err)
+		b.logger.Print(err)
 	}
 }
