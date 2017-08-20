@@ -9,8 +9,11 @@ import (
 
 type Properties map[string]interface{}
 
-func (p *Properties) Merge(props Properties) {
-	for k, v := range props {
+func (p *Properties) Merge(props *Properties) {
+	if props == nil {
+		return
+	}
+	for k, v := range *props {
 		(*p)[k] = v
 	}
 }

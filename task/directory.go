@@ -9,21 +9,20 @@ import (
 )
 
 type Directory struct {
-	Name  string
 	Path  string
 	Group string
 	Owner string
 	Perm  os.FileMode
 
-	logger     *log.Logger
-	properties *gopack.Properties
-	defaults   *gopack.Properties
+	logger   *log.Logger
+	props    *gopack.Properties
+	defaults *gopack.Properties
 	gopack.BaseTask
 }
 
 func (d Directory) Run(props *gopack.Properties, logger *log.Logger, runActions ...gopack.Action) bool {
 	d.logger = logger
-	d.properties = props
+	d.props = props
 	d.setDefaults()
 	return d.BaseTask.RunActions(&d, d.registerActions(), runActions)
 }
@@ -33,7 +32,7 @@ func (d Directory) Logger() *log.Logger {
 }
 
 func (d Directory) Properties() *gopack.Properties {
-	return d.properties
+	return d.props
 }
 
 func (d Directory) registerActions() gopack.ActionMethods {
@@ -44,8 +43,7 @@ func (d Directory) registerActions() gopack.ActionMethods {
 }
 
 func (d *Directory) setDefaults() {
-	switch {
-	case d.Perm == 0:
+	if d.Perm == 0 {
 		d.Perm = 0755
 	}
 }

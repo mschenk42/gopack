@@ -62,7 +62,7 @@ type BaseTask struct {
 	Notify      map[Action][]func()
 	ContOnError bool
 	logger      *log.Logger
-	properties  *Properties
+	props       *Properties
 }
 
 type Runner interface {
@@ -95,9 +95,8 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 }
 
 func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []Action) bool {
-
 	b.logger = task.Logger()
-	b.properties = task.Properties()
+	b.props = task.Properties()
 
 	if b.logger == nil {
 		b.logger.Panicf("logger is nil for task %s", task)
