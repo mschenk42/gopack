@@ -1,6 +1,11 @@
 package gopack
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 
 type Properties map[string]interface{}
 
@@ -34,4 +39,28 @@ func (p *Properties) StrSlice() []string {
 
 func (p *Properties) StrMap() map[string]string {
 	return map[string]string{}
+}
+
+func (p *Properties) Load(filename string) error {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	return p.unmarshalJSON(b)
+}
+
+func (p *Properties) Save(filename string, x os.FileMode) error {
+	b, err := p.marshalJSON()
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, b, x)
+}
+
+func (p *Properties) unmarshalJSON(b []byte) error {
+	return json.Unmarshal(b, p)
+}
+
+func (p *Properties) marshalJSON() ([]byte, error) {
+	return json.Marshal(p)
 }
