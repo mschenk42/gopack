@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	fail_Keyword = "\\[NOT RUN\\]"
-	pass_Keyword = "\\[RUN\\] "
+	failKeywords = "\\[NOT RUN\\]"
+	passKeywords = "\\[RUN\\] "
 )
 
 func TestRunTask(t *testing.T) {
@@ -23,7 +23,7 @@ func TestRunTask(t *testing.T) {
 	}
 
 	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", pass_Keyword), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
 }
 
@@ -36,7 +36,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{NotIf: func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", fail_Keyword), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -45,7 +45,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{NotIf: func() (bool, error) { return false, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", pass_Keyword), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -54,7 +54,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{OnlyIf: func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", pass_Keyword), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -63,7 +63,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{OnlyIf: func() (bool, error) { return false, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", fail_Keyword), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -74,7 +74,7 @@ func TestGuards(t *testing.T) {
 			NotIf:  func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", fail_Keyword), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
 	fmt.Print(buf.String())
 }
 
@@ -113,8 +113,8 @@ func TestNotify(t *testing.T) {
 	}
 
 	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
-	assert.Regexp("task1.*create.*RUN", buf.String())
-	assert.Regexp("task2 notified.*create.*RUN", buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task2 notified.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
 }
 

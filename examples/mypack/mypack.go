@@ -21,9 +21,5 @@ func run(pack *gopack.Pack) {
 	task.Directory{
 		Path: "/tmp/test",
 		Perm: 0755,
-	}.Run(
-		pack.Props,
-		pack.Logger,
-		gopack.CreateAction,
-	)
+	}.Run(pack.Props, pack.Logger, gopack.CreateAction)
 }
