@@ -39,7 +39,9 @@ func TestStringType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	assert.Equal("val", p["string"].(string))
+	v, f := p.StringVar("string")
+	assert.Equal(true, f)
+	assert.Equal("val", v)
 }
 
 func TestFloat64Type(t *testing.T) {
@@ -48,7 +50,9 @@ func TestFloat64Type(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	assert.Equal(0.1, p["float"].(float64))
+	v, f := p.FloatVar("float")
+	assert.Equal(true, f)
+	assert.Equal(0.1, v)
 }
 
 func TestIntType(t *testing.T) {
@@ -57,7 +61,9 @@ func TestIntType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	assert.Equal(1, int(p["int"].(float64)))
+	v, f := p.IntVar("int")
+	assert.Equal(true, f)
+	assert.Equal(1, v)
 }
 
 func TestMapType(t *testing.T) {
@@ -66,16 +72,20 @@ func TestMapType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	assert.Equal(map[string]interface{}{"key1": "val1", "key2": "val2"}, p["map"].(map[string]interface{}))
+	v, f := p.MapVar("map")
+	assert.Equal(true, f)
+	assert.Equal(map[string]interface{}{"key1": "val1", "key2": "val2"}, v)
 }
 
-func TestArrayType(t *testing.T) {
+func TestSliceType(t *testing.T) {
 	assert := assert.New(t)
 	b := []byte(`{"array": ["val1", "val2"]}`)
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	assert.Equal([]interface{}{"val1", "val2"}, p["array"].([]interface{}))
+	v, f := p.SliceVar("array")
+	assert.Equal(true, f)
+	assert.Equal([]interface{}{"val1", "val2"}, v)
 }
 
 func TestBoolType(t *testing.T) {
@@ -84,7 +94,9 @@ func TestBoolType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	assert.Equal(true, p["bool"].(bool))
+	v, f := p.BoolVar("bool")
+	assert.Equal(true, f)
+	assert.Equal(true, v)
 }
 
 func TestNilType(t *testing.T) {
@@ -93,7 +105,9 @@ func TestNilType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	assert.Equal(nil, p["nil"])
+	v, f := p.MapVar("nil")
+	assert.Equal(true, f)
+	assert.Equal(map[string]interface{}{}, v)
 }
 
 func TestWrongType(t *testing.T) {

@@ -17,6 +17,54 @@ func (p *Properties) Merge(props *Properties) {
 	}
 }
 
+func (p *Properties) StringVar(key string) (string, bool) {
+	v, found := (*p)[key]
+	if found && v != nil {
+		return v.(string), found
+	}
+	return "", found
+}
+
+func (p *Properties) FloatVar(key string) (float64, bool) {
+	v, found := (*p)[key]
+	if found && v != nil {
+		return v.(float64), found
+	}
+	return 0, found
+}
+
+func (p *Properties) IntVar(key string) (int, bool) {
+	v, found := (*p)[key]
+	if found && v != nil {
+		return int(v.(float64)), found
+	}
+	return 0, found
+}
+
+func (p *Properties) MapVar(key string) (map[string]interface{}, bool) {
+	v, found := (*p)[key]
+	if found && v != nil {
+		return v.(map[string]interface{}), found
+	}
+	return map[string]interface{}{}, found
+}
+
+func (p *Properties) SliceVar(key string) ([]interface{}, bool) {
+	v, found := (*p)[key]
+	if found && v != nil {
+		return v.([]interface{}), found
+	}
+	return []interface{}{}, found
+}
+
+func (p *Properties) BoolVar(key string) (bool, bool) {
+	v, found := (*p)[key]
+	if found && v != nil {
+		return v.(bool), found
+	}
+	return false, found
+}
+
 func (p *Properties) Load(filename string) error {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
