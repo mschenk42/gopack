@@ -3,7 +3,6 @@ package gopack
 import (
 	"errors"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -62,18 +61,16 @@ type BaseTask struct {
 	Subscribers map[Action][]func()
 	ContOnError bool
 
-	logger *log.Logger
-	props  *Properties
+	props *Properties
 }
 
 type Runner interface {
-	Run(props *Properties, logger *log.Logger, actions ...Action) bool
+	Run(props *Properties, actions ...Action) bool
 }
 
 type Task interface {
 	Runner
 	fmt.Stringer
-	Logger() *log.Logger
 	Properties() *Properties
 }
 
@@ -96,12 +93,7 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 }
 
 func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []Action) bool {
-	b.logger = task.Logger()
 	b.props = task.Properties()
-
-	if b.logger == nil {
-		panic(fmt.Sprintf("logger is nil for task %s", task))
-	}
 
 	if len(runActions) == 0 {
 		b.handleError(fmt.Errorf("unable to run %s, no actions specified", task))
@@ -125,13 +117,13 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	return hasRun
 }
 
-func (b *BaseTask) AddSubscriber(task Task, action Action, props *Properties, logger *log.Logger) {
+func (b *BaseTask) AddSubscriber(task Task, action Action, props *Properties) {
 	if b.Subscribers == nil {
 		b.Subscribers = map[Action][]func(){}
 	}
 	b.Subscribers[action] = append(
 		b.Subscribers[action],
-		func() { task.Run(props, logger, action) },
+		func() { task.Run(props, action) },
 	)
 }
 
@@ -166,7 +158,7 @@ func (b BaseTask) logRunStatus(hasRun bool, t Task, action Action, startTime tim
 	if hasRun {
 		status = "[RUN]"
 	}
-	b.logger.Printf("%s %s %8s %10s\n", t, action, status, time.Since(startTime))
+	Logger.Printf("%s %s %8s %10s\n", t, action, status, time.Since(startTime))
 }
 
 func (b BaseTask) canRun() bool {
@@ -188,8 +180,8 @@ func (b BaseTask) handleError(err error) {
 	switch {
 	case err == nil:
 	case !b.ContOnError:
-		b.logger.Panic(err)
+		Logger.Panic(err)
 	default:
-		b.logger.Print(err)
+		Logger.Print(err)
 	}
 }

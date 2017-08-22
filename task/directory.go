@@ -2,7 +2,6 @@ package task
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/mschenk42/gopack"
@@ -14,21 +13,15 @@ type Directory struct {
 	Owner string
 	Perm  os.FileMode
 
-	logger   *log.Logger
 	props    *gopack.Properties
 	defaults *gopack.Properties
 	gopack.BaseTask
 }
 
-func (d Directory) Run(props *gopack.Properties, logger *log.Logger, runActions ...gopack.Action) bool {
-	d.logger = logger
+func (d Directory) Run(props *gopack.Properties, runActions ...gopack.Action) bool {
 	d.props = props
 	d.setDefaults()
 	return d.BaseTask.RunActions(&d, d.registerActions(), runActions)
-}
-
-func (d Directory) Logger() *log.Logger {
-	return d.logger
 }
 
 func (d Directory) Properties() *gopack.Properties {

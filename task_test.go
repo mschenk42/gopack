@@ -16,26 +16,34 @@ const (
 
 func TestRunTask(t *testing.T) {
 	assert := assert.New(t)
-	logger, buf := newLoggerBuffer()
+
+	saveLogger := Logger
+	buf := &bytes.Buffer{}
+	Logger = log.New(buf, "", 0)
+	defer func() { Logger = saveLogger }()
 
 	t1 := Task1{
 		Name: "task1",
 	}
 
-	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
 }
 
 func TestGuards(t *testing.T) {
 	assert := assert.New(t)
-	logger, buf := newLoggerBuffer()
+
+	saveLogger := Logger
+	buf := &bytes.Buffer{}
+	Logger = log.New(buf, "", 0)
+	defer func() { Logger = saveLogger }()
 
 	t1 := Task1{
 		Name:     "task1",
 		BaseTask: BaseTask{NotIf: func() (bool, error) { return true, nil }},
 	}
-	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
 	fmt.Print(buf.String())
 
@@ -44,7 +52,7 @@ func TestGuards(t *testing.T) {
 		Name:     "task1",
 		BaseTask: BaseTask{NotIf: func() (bool, error) { return false, nil }},
 	}
-	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
 
@@ -53,7 +61,7 @@ func TestGuards(t *testing.T) {
 		Name:     "task1",
 		BaseTask: BaseTask{OnlyIf: func() (bool, error) { return true, nil }},
 	}
-	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
 
@@ -62,7 +70,7 @@ func TestGuards(t *testing.T) {
 		Name:     "task1",
 		BaseTask: BaseTask{OnlyIf: func() (bool, error) { return false, nil }},
 	}
-	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
 	fmt.Print(buf.String())
 
@@ -73,14 +81,18 @@ func TestGuards(t *testing.T) {
 			OnlyIf: func() (bool, error) { return true, nil },
 			NotIf:  func() (bool, error) { return true, nil }},
 	}
-	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
 	fmt.Print(buf.String())
 }
 
 func TestContOnError(t *testing.T) {
 	assert := assert.New(t)
-	logger, buf := newLoggerBuffer()
+
+	saveLogger := Logger
+	buf := &bytes.Buffer{}
+	Logger = log.New(buf, "", 0)
+	defer func() { Logger = saveLogger }()
 
 	t1 := Task1{
 		Name: "task1",
@@ -88,14 +100,18 @@ func TestContOnError(t *testing.T) {
 			ContOnError: true},
 	}
 
-	assert.NotPanics(func() { t1.Run(nil, logger) })
+	assert.NotPanics(func() { t1.Run(nil) })
 	assert.Regexp("unable to run task1", buf.String())
 	fmt.Print(buf.String())
 }
 
 func TestSubscriberStruct(t *testing.T) {
 	assert := assert.New(t)
-	logger, buf := newLoggerBuffer()
+
+	saveLogger := Logger
+	buf := &bytes.Buffer{}
+	Logger = log.New(buf, "", 0)
+	defer func() { Logger = saveLogger }()
 
 	t2 := Task2{
 		Name: "task2 notified",
@@ -106,13 +122,13 @@ func TestSubscriberStruct(t *testing.T) {
 		BaseTask: BaseTask{
 			Subscribers: map[Action][]func(){
 				CreateAction: []func(){
-					func() { t2.Run(nil, logger, CreateAction) },
+					func() { t2.Run(nil, CreateAction) },
 				},
 			},
 		},
 	}
 
-	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	assert.Regexp(fmt.Sprintf("task2 notified.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
@@ -120,7 +136,11 @@ func TestSubscriberStruct(t *testing.T) {
 
 func TestSubscriberMethod(t *testing.T) {
 	assert := assert.New(t)
-	logger, buf := newLoggerBuffer()
+
+	saveLogger := Logger
+	buf := &bytes.Buffer{}
+	Logger = log.New(buf, "", 0)
+	defer func() { Logger = saveLogger }()
 
 	t1 := Task1{
 		Name: "task1",
@@ -130,18 +150,12 @@ func TestSubscriberMethod(t *testing.T) {
 		Name: "task2 notified",
 	}
 
-	t1.AddSubscriber(t2, CreateAction, nil, logger)
+	t1.AddSubscriber(t2, CreateAction, nil)
 
-	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	assert.Regexp(fmt.Sprintf("task2 notified.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
-}
-
-func newLoggerBuffer() (*log.Logger, *bytes.Buffer) {
-	buf := &bytes.Buffer{}
-	logger := log.New(buf, "", 0)
-	return logger, buf
 }
 
 type Task1 struct {
@@ -152,17 +166,12 @@ type Task1 struct {
 	BaseTask
 }
 
-func (t Task1) Run(props *Properties, logger *log.Logger, runActions ...Action) bool {
-	t.logger = logger
+func (t Task1) Run(props *Properties, runActions ...Action) bool {
 	t.properties = props
 	regActions := ActionMethods{
 		CreateAction: t.create,
 	}
 	return t.BaseTask.RunActions(&t, regActions, runActions)
-}
-
-func (d Task1) Logger() *log.Logger {
-	return d.logger
 }
 
 func (d Task1) Properties() *Properties {
@@ -185,18 +194,13 @@ type Task2 struct {
 	BaseTask
 }
 
-func (t Task2) Run(props *Properties, logger *log.Logger, runActions ...Action) bool {
-	t.logger = logger
+func (t Task2) Run(props *Properties, runActions ...Action) bool {
 	t.properties = props
 	regActions := ActionMethods{
 		NothingAction: t.nothing,
 		CreateAction:  t.create,
 	}
 	return t.BaseTask.RunActions(&t, regActions, runActions)
-}
-
-func (d Task2) Logger() *log.Logger {
-	return d.logger
 }
 
 func (d Task2) Properties() *Properties {

@@ -1,7 +1,6 @@
 package task
 
 import (
-	"log"
 	"os"
 	"testing"
 
@@ -18,7 +17,6 @@ func TestCreateDirectory(t *testing.T) {
 		Perm: 0755,
 	}.Run(
 		nil,
-		log.New(os.Stdout, "", 0),
 		gopack.CreateAction,
 	)
 	defer os.Remove(d)
@@ -40,7 +38,6 @@ func TestCreateExistingDirectory(t *testing.T) {
 		Perm: 0755,
 	}.Run(
 		nil,
-		log.New(os.Stdout, "", 0),
 		gopack.CreateAction,
 	)
 
@@ -60,7 +57,6 @@ func TestRemoveDirectory(t *testing.T) {
 		Path: d,
 	}.Run(
 		nil,
-		log.New(os.Stdout, "", 0),
 		gopack.RemoveAction,
 	)
 
@@ -79,7 +75,6 @@ func TestRemoveMissingDirectory(t *testing.T) {
 		Path: d,
 	}.Run(
 		nil,
-		log.New(os.Stdout, "", 0),
 		gopack.RemoveAction,
 	)
 
