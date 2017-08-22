@@ -29,7 +29,7 @@ func ParseCLI() *Properties {
 
 		fmt.Printf("loading %s configuration file\n", cfgFile)
 		if err := p.Load(cfgFile); err != nil {
-			fmt.Fprintf(os.Stderr, "unable to load property file %s, %s", cfgFile, err)
+			fmt.Fprintf(os.Stderr, "unable to load property file %s, %s\n", cfgFile, err)
 			os.Exit(1)
 			return nil
 		}

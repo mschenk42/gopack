@@ -93,7 +93,7 @@ func TestContOnError(t *testing.T) {
 	fmt.Print(buf.String())
 }
 
-func TestNotify(t *testing.T) {
+func TestSubscriberStruct(t *testing.T) {
 	assert := assert.New(t)
 	logger, buf := newLoggerBuffer()
 
@@ -104,13 +104,33 @@ func TestNotify(t *testing.T) {
 	t1 := Task1{
 		Name: "task1",
 		BaseTask: BaseTask{
-			Notify: map[Action][]func(){
+			Subscribers: map[Action][]func(){
 				CreateAction: []func(){
 					func() { t2.Run(nil, logger, CreateAction) },
 				},
 			},
 		},
 	}
+
+	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task2 notified.*create.*%s", passKeywords), buf.String())
+	fmt.Print(buf.String())
+}
+
+func TestSubscriberMethod(t *testing.T) {
+	assert := assert.New(t)
+	logger, buf := newLoggerBuffer()
+
+	t1 := Task1{
+		Name: "task1",
+	}
+
+	t2 := Task2{
+		Name: "task2 notified",
+	}
+
+	t1.AddSubscriber(t2, CreateAction, nil, logger)
 
 	assert.NotPanics(func() { t1.Run(nil, logger, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())

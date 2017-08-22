@@ -59,10 +59,11 @@ type GuardFunc func() (bool, error)
 type BaseTask struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
-	Notify      map[Action][]func()
+	Subscribers map[Action][]func()
 	ContOnError bool
-	logger      *log.Logger
-	props       *Properties
+
+	logger *log.Logger
+	props  *Properties
 }
 
 type Runner interface {
@@ -99,7 +100,7 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	b.props = task.Properties()
 
 	if b.logger == nil {
-		b.logger.Panicf("logger is nil for task %s", task)
+		panic(fmt.Sprintf("logger is nil for task %s", task))
 	}
 
 	if len(runActions) == 0 {
@@ -124,6 +125,16 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	return hasRun
 }
 
+func (b *BaseTask) AddSubscriber(task Task, action Action, props *Properties, logger *log.Logger) {
+	if b.Subscribers == nil {
+		b.Subscribers = map[Action][]func(){}
+	}
+	b.Subscribers[action] = append(
+		b.Subscribers[action],
+		func() { task.Run(props, logger, action) },
+	)
+}
+
 func (b BaseTask) runAction(task Task, regActions ActionMethods, a Action) bool {
 	hasRun := false
 	t := time.Now()
@@ -142,7 +153,7 @@ func (b BaseTask) runAction(task Task, regActions ActionMethods, a Action) bool 
 }
 
 func (b BaseTask) notify(action Action) {
-	funcs, found := b.Notify[action]
+	funcs, found := b.Subscribers[action]
 	if found {
 		for _, f := range funcs {
 			f()
