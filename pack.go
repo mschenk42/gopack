@@ -20,9 +20,10 @@ type Logger interface {
 }
 
 type Pack struct {
-	Name    string
-	Props   *Properties
-	RunFunc func(pack *Pack)
+	Name         string
+	Props        *Properties
+	RunFunc      func(pack *Pack)
+	NoRunDelayed bool
 }
 
 func (p *Pack) Run(props *Properties) {
@@ -31,4 +32,7 @@ func (p *Pack) Run(props *Properties) {
 	}
 	p.Props.Merge(props)
 	p.RunFunc(p)
+	if !p.NoRunDelayed {
+		DelayedSubscribers.Run()
+	}
 }

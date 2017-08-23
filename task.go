@@ -27,6 +27,8 @@ const (
 )
 
 var (
+	ErrUnknownAction = errors.New("action unknown")
+
 	ActionNames = map[Action]string{
 		AddAction:     "add",
 		CreateAction:  "create",
@@ -47,7 +49,7 @@ var (
 		UpgradeAction: "upgrade",
 	}
 
-	ErrUnknownAction = errors.New("action unknown")
+	DelayedSubscribers delayedSubcribers = delayedSubcribers{}
 )
 
 type Action int
@@ -62,6 +64,16 @@ type BaseTask struct {
 	ContOnError bool
 
 	props *Properties
+}
+
+type delayedSubcribers []func()
+
+func (d *delayedSubcribers) Run() {
+	for _, f := range *d {
+		f()
+	}
+	//clear the list
+	d = &delayedSubcribers{}
 }
 
 type Runner interface {
@@ -117,13 +129,19 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	return hasRun
 }
 
-func (b *BaseTask) AddSubscriber(task Task, action Action, props *Properties) {
+func (b *BaseTask) AddSubscriber(task Task, action Action, props *Properties, delayed bool) {
 	if b.Subscribers == nil {
 		b.Subscribers = map[Action][]func(){}
 	}
 	b.Subscribers[action] = append(
 		b.Subscribers[action],
-		func() { task.Run(props, action) },
+		func() {
+			if delayed {
+				DelayedSubscribers = append(DelayedSubscribers, func() { task.Run(props, action) })
+			} else {
+				task.Run(props, action)
+			}
+		},
 	)
 }
 

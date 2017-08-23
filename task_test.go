@@ -150,10 +150,41 @@ func TestSubscriberMethod(t *testing.T) {
 		Name: "task2 notified",
 	}
 
-	t1.AddSubscriber(t2, CreateAction, nil)
+	t1.AddSubscriber(t2, CreateAction, nil, false)
 
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task2 notified.*create.*%s", passKeywords), buf.String())
+	fmt.Print(buf.String())
+}
+
+func TestDelayedSubscriber(t *testing.T) {
+	assert := assert.New(t)
+
+	saveLogger := Log
+	buf := &bytes.Buffer{}
+	Log = log.New(buf, "", 0)
+	defer func() { Log = saveLogger }()
+
+	t1 := Task1{
+		Name: "task1",
+	}
+
+	t2 := Task2{
+		Name: "task2 notified",
+	}
+
+	t3 := Task1{
+		Name: "task3",
+	}
+
+	t1.AddSubscriber(t2, CreateAction, nil, true)
+
+	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
+	assert.NotPanics(func() { t3.Run(nil, CreateAction) })
+	assert.NotPanics(func() { DelayedSubscribers.Run() })
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task3.*create.*%s", passKeywords), buf.String())
 	assert.Regexp(fmt.Sprintf("task2 notified.*create.*%s", passKeywords), buf.String())
 	fmt.Print(buf.String())
 }
