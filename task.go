@@ -158,7 +158,7 @@ func (b BaseTask) logRunStatus(hasRun bool, t Task, action Action, startTime tim
 	if hasRun {
 		status = "[RUN]"
 	}
-	Logger.Printf("%s %s %8s %10s\n", t, action, status, time.Since(startTime))
+	Log.Printf("%s %s %8s %10s\n", t, action, status, time.Since(startTime))
 }
 
 func (b BaseTask) canRun() bool {
@@ -180,8 +180,8 @@ func (b BaseTask) handleError(err error) {
 	switch {
 	case err == nil:
 	case !b.ContOnError:
-		Logger.Panic(err)
+		Log.Panic(err)
 	default:
-		Logger.Print(err)
+		Log.Print(err)
 	}
 }

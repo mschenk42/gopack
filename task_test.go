@@ -17,10 +17,10 @@ const (
 func TestRunTask(t *testing.T) {
 	assert := assert.New(t)
 
-	saveLogger := Logger
+	saveLogger := Log
 	buf := &bytes.Buffer{}
-	Logger = log.New(buf, "", 0)
-	defer func() { Logger = saveLogger }()
+	Log = log.New(buf, "", 0)
+	defer func() { Log = saveLogger }()
 
 	t1 := Task1{
 		Name: "task1",
@@ -34,10 +34,10 @@ func TestRunTask(t *testing.T) {
 func TestGuards(t *testing.T) {
 	assert := assert.New(t)
 
-	saveLogger := Logger
+	saveLogger := Log
 	buf := &bytes.Buffer{}
-	Logger = log.New(buf, "", 0)
-	defer func() { Logger = saveLogger }()
+	Log = log.New(buf, "", 0)
+	defer func() { Log = saveLogger }()
 
 	t1 := Task1{
 		Name:     "task1",
@@ -89,10 +89,10 @@ func TestGuards(t *testing.T) {
 func TestContOnError(t *testing.T) {
 	assert := assert.New(t)
 
-	saveLogger := Logger
+	saveLogger := Log
 	buf := &bytes.Buffer{}
-	Logger = log.New(buf, "", 0)
-	defer func() { Logger = saveLogger }()
+	Log = log.New(buf, "", 0)
+	defer func() { Log = saveLogger }()
 
 	t1 := Task1{
 		Name: "task1",
@@ -108,10 +108,10 @@ func TestContOnError(t *testing.T) {
 func TestSubscriberStruct(t *testing.T) {
 	assert := assert.New(t)
 
-	saveLogger := Logger
+	saveLogger := Log
 	buf := &bytes.Buffer{}
-	Logger = log.New(buf, "", 0)
-	defer func() { Logger = saveLogger }()
+	Log = log.New(buf, "", 0)
+	defer func() { Log = saveLogger }()
 
 	t2 := Task2{
 		Name: "task2 notified",
@@ -137,10 +137,10 @@ func TestSubscriberStruct(t *testing.T) {
 func TestSubscriberMethod(t *testing.T) {
 	assert := assert.New(t)
 
-	saveLogger := Logger
+	saveLogger := Log
 	buf := &bytes.Buffer{}
-	Logger = log.New(buf, "", 0)
-	defer func() { Logger = saveLogger }()
+	Log = log.New(buf, "", 0)
+	defer func() { Log = saveLogger }()
 
 	t1 := Task1{
 		Name: "task1",
