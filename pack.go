@@ -1,6 +1,7 @@
 package gopack
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -28,13 +29,17 @@ type Pack struct {
 	NoRunDelayed bool
 }
 
+func (p Pack) String() string {
+	return fmt.Sprintf("%s", p.Name)
+}
+
 func (p *Pack) Run(props *Properties) {
 	t := time.Now()
 	if p.RunFunc == nil {
 		Log.Panic("run function nil for pack %s", p.Name)
 	}
 	p.Props.Merge(props)
-	Log.Printf("Pack: %s (start)", p.Name)
+	Log.Printf("Pack: %s (start)", p)
 	Log.Printf("%s", p.Props.Redact(p.Redact))
 	Log.Println("\n  [run]")
 	p.RunFunc(p)
@@ -42,5 +47,5 @@ func (p *Pack) Run(props *Properties) {
 		Log.Println("\n  [delayed run]")
 		DelayedSubscribers.Run()
 	}
-	Log.Printf("\nPack: %s (end) %s\n\n", p.Name, time.Since(t))
+	Log.Printf("\nPack: %s (end) %s\n\n", p, time.Since(t))
 }
