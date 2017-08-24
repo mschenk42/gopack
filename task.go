@@ -69,6 +69,7 @@ type BaseTask struct {
 type delayedSubcribers []func()
 
 func (d *delayedSubcribers) Run() {
+	Log.Printf("\n  [delayed run]")
 	for _, f := range *d {
 		f()
 	}
@@ -112,18 +113,26 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 		return false
 	}
 
-	hasRun := false
 	t := time.Now()
-	if !b.canRun() {
-		b.logRunStatus(hasRun, task, runActions[0], t)
+	hasRun := false
+	canRun, reason := b.canRun()
+	if !canRun {
+		b.logRunStatus(hasRun, canRun, reason, task, runActions[0], t)
 		return hasRun
 	}
 
 	for _, a := range runActions {
-		if b.runAction(task, regActions, a) {
-			hasRun = true
-			b.notify(a)
+		f, found := regActions.actionFunc(a)
+		if !found {
+			b.handleError(fmt.Errorf("%s %s", a, ErrUnknownAction))
+			return hasRun
 		}
+
+		hasRun, err := f()
+		b.handleError(err)
+		b.logRunStatus(hasRun, canRun, reason, task, a, t)
+
+		b.notify(a)
 	}
 
 	return hasRun
@@ -145,23 +154,6 @@ func (b *BaseTask) AddSubscriber(task Task, action Action, props *Properties, de
 	)
 }
 
-func (b BaseTask) runAction(task Task, regActions ActionMethods, a Action) bool {
-	hasRun := false
-	t := time.Now()
-
-	f, found := regActions.actionFunc(a)
-	if !found {
-		b.handleError(fmt.Errorf("%s %s", a, ErrUnknownAction))
-		return hasRun
-	}
-
-	hasRun, err := f()
-	b.handleError(err)
-	b.logRunStatus(hasRun, task, a, t)
-
-	return hasRun
-}
-
 func (b BaseTask) notify(action Action) {
 	funcs, found := b.Subscribers[action]
 	if found {
@@ -171,27 +163,42 @@ func (b BaseTask) notify(action Action) {
 	}
 }
 
-func (b BaseTask) logRunStatus(hasRun bool, t Task, action Action, startTime time.Time) {
-	status := "[NOT RUN]"
-	if hasRun {
-		status = "[RUN]"
+func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, t Task, action Action, startTime time.Time) {
+	status := ""
+	switch {
+	case !canRun && reason != "":
+		status = fmt.Sprintf("(skipped %s)", reason)
+	case !canRun:
+		status = fmt.Sprintf("(skipped)", reason)
+	case hasRun && reason != "":
+		status = fmt.Sprintf("(run %s)", reason)
+	case hasRun:
+		status = fmt.Sprintf("(run)")
+	default:
+		status = "(up to date)"
 	}
-	Log.Printf("%s %s %8s %10s\n", t, action, status, time.Since(startTime))
+
+	Log.Printf("  * %s: %s %s %s", t, action, status, time.Since(startTime))
 }
 
-func (b BaseTask) canRun() bool {
-	var err error
-	run := true
+func (b BaseTask) canRun() (bool, string) {
+	var (
+		err    error
+		run    bool = true
+		reason string
+	)
 	if b.OnlyIf != nil {
+		reason = "due to only_if"
 		run, err = b.OnlyIf()
 		b.handleError(err)
 	}
 	if b.NotIf != nil {
+		reason = "due to not_if"
 		run, err = b.NotIf()
 		run = !run
 		b.handleError(err)
 	}
-	return run
+	return run, reason
 }
 
 func (b BaseTask) handleError(err error) {
@@ -200,6 +207,6 @@ func (b BaseTask) handleError(err error) {
 	case !b.ContOnError:
 		Log.Panic(err)
 	default:
-		Log.Print(err)
+		Log.Printf("    ! %s", err)
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var Log Logger = log.New(os.Stdout, "", log.Lmicroseconds)
+var Log Logger = log.New(os.Stdout, "", 0)
 
 type Logger interface {
 	Fatal(v ...interface{})
@@ -31,6 +31,8 @@ func (p *Pack) Run(props *Properties) {
 		Log.Panic("run function nil for pack %s", p.Name)
 	}
 	p.Props.Merge(props)
+	Log.Printf("Pack: %s\n\n", p.Name)
+	Log.Println("  [run]")
 	p.RunFunc(p)
 	if !p.NoRunDelayed {
 		DelayedSubscribers.Run()

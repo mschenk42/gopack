@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	failKeywords = "\\[NOT RUN\\]"
-	passKeywords = "\\[RUN\\] "
+	failKeywords = "\\(up to date\\)"
+	passKeywords = "\\(run\\) "
 )
 
 func TestRunTask(t *testing.T) {
@@ -44,7 +44,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{NotIf: func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "skipped due to not_if"), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -53,7 +53,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{NotIf: func() (bool, error) { return false, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "run due to not_if"), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -62,7 +62,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{OnlyIf: func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "run due to only_if"), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -71,7 +71,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{OnlyIf: func() (bool, error) { return false, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "skipped due to only_if"), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -82,7 +82,7 @@ func TestGuards(t *testing.T) {
 			NotIf:  func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", failKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "skipped due to not_if"), buf.String())
 	fmt.Print(buf.String())
 }
 

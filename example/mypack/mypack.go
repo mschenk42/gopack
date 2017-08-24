@@ -7,6 +7,7 @@ import (
 
 func Run(props *gopack.Properties) {
 	pack := gopack.Pack{
+		Name: "MyPack",
 		Props: &gopack.Properties{
 			"nginx.log_dir":   "/var/log/nginx",
 			"nginx.cache_dir": "/var/cache",
