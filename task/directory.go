@@ -13,8 +13,7 @@ type Directory struct {
 	Owner string
 	Perm  os.FileMode
 
-	props    *gopack.Properties
-	defaults *gopack.Properties
+	props *gopack.Properties
 	gopack.BaseTask
 }
 
