@@ -8,6 +8,21 @@ import (
 
 type Properties map[string]interface{}
 
+func (p *Properties) String() string {
+	b, err := json.MarshalIndent(p, "", "  ")
+	if err != nil {
+		Log.Panic(err)
+	}
+	return string(b)
+}
+
+func (p Properties) Redact(redact []string) *Properties {
+	for _, k := range redact {
+		p[k] = "***"
+	}
+	return &p
+}
+
 func (p *Properties) Merge(props *Properties) {
 	if props == nil {
 		return

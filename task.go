@@ -69,7 +69,6 @@ type BaseTask struct {
 type delayedSubcribers []func()
 
 func (d *delayedSubcribers) Run() {
-	Log.Printf("\n  [delayed run]")
 	for _, f := range *d {
 		f()
 	}
@@ -127,11 +126,9 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 			b.handleError(fmt.Errorf("%s %s", a, ErrUnknownAction))
 			return hasRun
 		}
-
 		hasRun, err := f()
 		b.handleError(err)
 		b.logRunStatus(hasRun, canRun, reason, task, a, t)
-
 		b.notify(a)
 	}
 

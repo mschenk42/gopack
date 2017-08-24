@@ -42,7 +42,7 @@ func (d *Directory) setDefaults() {
 }
 
 func (d Directory) String() string {
-	return fmt.Sprintf("directory %s", d.Path)
+	return fmt.Sprintf("directory %s Group:%s Owner:%s Perm:%s", d.Path, d.Group, d.Owner, d.Perm)
 }
 
 func (d Directory) create() (bool, error) {

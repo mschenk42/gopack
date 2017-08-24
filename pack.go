@@ -3,6 +3,7 @@ package gopack
 import (
 	"log"
 	"os"
+	"time"
 )
 
 var Log Logger = log.New(os.Stdout, "", 0)
@@ -22,19 +23,24 @@ type Logger interface {
 type Pack struct {
 	Name         string
 	Props        *Properties
+	Redact       []string
 	RunFunc      func(pack *Pack)
 	NoRunDelayed bool
 }
 
 func (p *Pack) Run(props *Properties) {
+	t := time.Now()
 	if p.RunFunc == nil {
 		Log.Panic("run function nil for pack %s", p.Name)
 	}
 	p.Props.Merge(props)
-	Log.Printf("Pack: %s\n\n", p.Name)
-	Log.Println("  [run]")
+	Log.Printf("Pack: %s (start)", p.Name)
+	Log.Printf("%s", p.Props.Redact(p.Redact))
+	Log.Println("\n  [run]")
 	p.RunFunc(p)
 	if !p.NoRunDelayed {
+		Log.Println("\n  [delayed run]")
 		DelayedSubscribers.Run()
 	}
+	Log.Printf("\nPack: %s (end) %s\n\n", p.Name, time.Since(t))
 }
