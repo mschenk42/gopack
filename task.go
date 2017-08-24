@@ -66,7 +66,7 @@ type BaseTask struct {
 	props *Properties
 }
 
-type delayedSubcribers []func()
+type delayedSubcribers map[string]func()
 
 func (d *delayedSubcribers) Run() {
 	for _, f := range *d {
@@ -143,7 +143,7 @@ func (b *BaseTask) AddSubscriber(task Task, action Action, props *Properties, de
 		b.Subscribers[action],
 		func() {
 			if delayed {
-				DelayedSubscribers = append(DelayedSubscribers, func() { task.Run(props, action) })
+				DelayedSubscribers[fmt.Sprintf("%s: %s", task, action)] = func() { task.Run(props, action) }
 			} else {
 				task.Run(props, action)
 			}
