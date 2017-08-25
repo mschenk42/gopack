@@ -121,7 +121,7 @@ func TestWhenRun(t *testing.T) {
 		Name: "task2 notified",
 	}
 
-	t1.NotifyWhen(t2, CreateAction, nil, false)
+	t1.NotifyWhen(t2, CreateAction, CreateAction, nil, false)
 
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
@@ -149,7 +149,7 @@ func TestDelayedRun(t *testing.T) {
 		Name: "task3",
 	}
 
-	t1.NotifyWhen(t2, CreateAction, nil, true)
+	t1.NotifyWhen(t2, CreateAction, CreateAction, nil, true)
 
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.NotPanics(func() { t3.Run(nil, CreateAction) })

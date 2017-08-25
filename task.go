@@ -136,18 +136,18 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	return hasRun
 }
 
-func (b *BaseTask) NotifyWhen(notify Task, whenAction Action, props *Properties, delayed bool) {
+func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction Action, props *Properties, delayed bool) {
 	if b.notify == nil {
 		b.notify = actionTaskRunSet{}
 	}
 	if b.notify[whenAction] == nil {
 		b.notify[whenAction] = map[string]func(){}
 	}
-	b.notify[whenAction][fmt.Sprintf("%s", notify)] = func() {
+	b.notify[whenAction][fmt.Sprintf("%s:%s", notify, forAction)] = func() {
 		if delayed {
-			DelayedNotify[fmt.Sprintf("%s:%s", notify, whenAction)] = func() { notify.Run(props, whenAction) }
+			DelayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(props, forAction) }
 		} else {
-			notify.Run(props, whenAction)
+			notify.Run(props, forAction)
 		}
 	}
 }
