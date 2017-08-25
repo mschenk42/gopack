@@ -11,7 +11,7 @@ import (
 func TestCreateDirectory(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/test"
+	d := "/tmp/create_dir"
 	Directory{
 		Path: d,
 		Perm: 0755,
@@ -28,7 +28,7 @@ func TestCreateDirectory(t *testing.T) {
 func TestCreateExistingDirectory(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/test"
+	d := "/tmp/create_existing_dir"
 	err := os.Mkdir(d, 0755)
 	defer os.Remove(d)
 	assert.Nil(err)
@@ -45,10 +45,31 @@ func TestCreateExistingDirectory(t *testing.T) {
 	assert.Nil(err)
 }
 
+func TestCreateDirectoryValidOwner(t *testing.T) {
+	assert := assert.New(t)
+
+	d := "/tmp/create_dir_owner"
+
+	Directory{
+		Owner: "mschenk",
+		Group: "admin",
+		Path:  d,
+		Perm:  0755,
+	}.Run(
+		nil,
+		gopack.CreateAction,
+	)
+	defer os.Remove(d)
+
+	_, err := os.Stat(d)
+	assert.Nil(err)
+
+}
+
 func TestRemoveDirectory(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/test"
+	d := "/tmp/remove_dir"
 	err := os.Mkdir(d, 0755)
 	defer os.Remove(d)
 	assert.Nil(err)
@@ -67,7 +88,7 @@ func TestRemoveDirectory(t *testing.T) {
 func TestRemoveMissingDirectory(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/test"
+	d := "/tmp/remove_missing_dir"
 	_, err := os.Stat(d)
 	assert.NotNil(err)
 

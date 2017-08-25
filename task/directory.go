@@ -3,6 +3,8 @@ package task
 import (
 	"fmt"
 	"os"
+	"os/user"
+	"strconv"
 
 	"github.com/mschenk42/gopack"
 )
@@ -41,7 +43,7 @@ func (d *Directory) setDefaults() {
 }
 
 func (d Directory) String() string {
-	return fmt.Sprintf("directory %s Group:%s Owner:%s Perm:%s", d.Path, d.Group, d.Owner, d.Perm)
+	return fmt.Sprintf("directory %s Owner:%s Group:%s Perm:%s", d.Path, d.Owner, d.Group, d.Perm)
 }
 
 func (d Directory) create() (bool, error) {
@@ -53,6 +55,50 @@ func (d Directory) create() (bool, error) {
 		return false, nil
 	default:
 		err := os.MkdirAll(d.Path, d.Perm)
+		if err != nil {
+			return false, err
+		}
+
+		if d.Owner == "" && d.Group == "" {
+			return true, err
+		}
+
+		var u *user.User
+		var gid, uid int
+
+		if d.Owner == "" {
+			u, err = user.Current()
+			if err != nil {
+				return false, err
+			}
+		} else {
+			u, err = user.Lookup(d.Owner)
+			if err != nil {
+				return false, err
+			}
+			uid, err = strconv.Atoi(u.Uid)
+			if err != nil {
+				return false, err
+			}
+		}
+
+		if d.Group == "" {
+			gid, err = strconv.Atoi(u.Gid)
+			if err != nil {
+				return false, err
+			}
+		} else {
+			g, err := user.LookupGroup(d.Group)
+			if err != nil {
+				return false, err
+			}
+			gid, err = strconv.Atoi(g.Gid)
+			if err != nil {
+				return false, err
+			}
+		}
+
+		err = os.Chown(d.Path, uid, gid)
 		return true, err
 	}
 }
@@ -65,6 +111,7 @@ func (d Directory) remove() (bool, error) {
 	case !x:
 		return false, nil
 	default:
+		//TODO: optionally allow RemoveAll
 		err := os.Remove(d.Path)
 		return true, err
 	}
