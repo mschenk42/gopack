@@ -49,7 +49,7 @@ var (
 		UpgradeAction: "upgrade",
 	}
 
-	DelayedSubscribers delayedSubcribers = delayedSubcribers{}
+	DelayedNotify taskRunSet = taskRunSet{}
 )
 
 type Action int
@@ -60,20 +60,21 @@ type GuardFunc func() (bool, error)
 type BaseTask struct {
 	OnlyIf      GuardFunc
 	NotIf       GuardFunc
-	Subscribers map[Action][]func()
 	ContOnError bool
 
-	props *Properties
+	props  *Properties
+	notify actionTaskRunSet
 }
 
-type delayedSubcribers map[string]func()
+type actionTaskRunSet map[Action]map[string]func()
+type taskRunSet map[string]func()
 
-func (d *delayedSubcribers) Run() {
+func (d *taskRunSet) Run() {
 	for _, f := range *d {
 		f()
 	}
 	//clear the list
-	d = &delayedSubcribers{}
+	d = &taskRunSet{}
 }
 
 type Runner interface {
@@ -129,30 +130,30 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 		hasRun, err := f()
 		b.handleError(err)
 		b.logRunStatus(hasRun, canRun, reason, task, a, t)
-		b.notify(a)
+		b.notifyTasks(a)
 	}
 
 	return hasRun
 }
 
-func (b *BaseTask) AddSubscriber(task Task, action Action, props *Properties, delayed bool) {
-	if b.Subscribers == nil {
-		b.Subscribers = map[Action][]func(){}
+func (b *BaseTask) NotifyWhen(notify Task, whenAction Action, props *Properties, delayed bool) {
+	if b.notify == nil {
+		b.notify = actionTaskRunSet{}
 	}
-	b.Subscribers[action] = append(
-		b.Subscribers[action],
-		func() {
-			if delayed {
-				DelayedSubscribers[fmt.Sprintf("%s: %s", task, action)] = func() { task.Run(props, action) }
-			} else {
-				task.Run(props, action)
-			}
-		},
-	)
+	if b.notify[whenAction] == nil {
+		b.notify[whenAction] = map[string]func(){}
+	}
+	b.notify[whenAction][fmt.Sprintf("%s", notify)] = func() {
+		if delayed {
+			DelayedNotify[fmt.Sprintf("%s:%s", notify, whenAction)] = func() { notify.Run(props, whenAction) }
+		} else {
+			notify.Run(props, whenAction)
+		}
+	}
 }
 
-func (b BaseTask) notify(action Action) {
-	funcs, found := b.Subscribers[action]
+func (b BaseTask) notifyTasks(action Action) {
+	funcs, found := b.notify[action]
 	if found {
 		for _, f := range funcs {
 			f()

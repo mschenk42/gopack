@@ -45,7 +45,7 @@ func (p *Pack) Run(props *Properties) {
 	p.RunFunc(p)
 	if !p.NoRunDelayed {
 		Log.Println("\n  [delayed run]")
-		DelayedSubscribers.Run()
+		DelayedNotify.Run()
 	}
 	Log.Printf("\nPack: %s (end) %s\n\n", p, time.Since(t))
 }
