@@ -101,7 +101,7 @@ func TestContOnError(t *testing.T) {
 	}
 
 	assert.NotPanics(func() { t1.Run(nil) })
-	assert.Regexp("unable to run task1", buf.String())
+	assert.Regexp("! unable to run, no action given", buf.String())
 	fmt.Print(buf.String())
 }
 

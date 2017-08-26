@@ -36,7 +36,7 @@ func (p Pack) String() string {
 func (p *Pack) Run(props *Properties) {
 	t := time.Now()
 	if p.RunFunc == nil {
-		Log.Panic("run function nil for pack %s", p.Name)
+		Log.Fatalf("  ! run function nil for pack %s", p.Name)
 	}
 	p.Props.Merge(props)
 	Log.Printf("Pack: %s (start)", p)
@@ -47,5 +47,5 @@ func (p *Pack) Run(props *Properties) {
 		Log.Println("\n  [delayed run]")
 		DelayedNotify.Run()
 	}
-	Log.Printf("\nPack: %s (end) %s\n\n", p, time.Since(t))
+	Log.Printf("\nPack: %s (end) %s\n", p, time.Since(t))
 }

@@ -109,7 +109,7 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	b.props = task.Properties()
 
 	if len(runActions) == 0 {
-		b.handleError(fmt.Errorf("unable to run %s, no actions specified", task))
+		b.handleError(fmt.Errorf("%s: nil\n    ! unable to run, no action given", task))
 		return false
 	}
 
@@ -124,7 +124,7 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	for _, a := range runActions {
 		f, found := regActions.actionFunc(a)
 		if !found {
-			b.handleError(fmt.Errorf("%s %s", a, ErrUnknownAction))
+			b.handleError(b.Errorf(task, a, ErrUnknownAction))
 			return hasRun
 		}
 		hasRun, err := f()
@@ -161,24 +161,6 @@ func (b BaseTask) notifyTasks(action Action) {
 	}
 }
 
-func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, t Task, action Action, startTime time.Time) {
-	status := ""
-	switch {
-	case !canRun && reason != "":
-		status = fmt.Sprintf("(skipped %s)", reason)
-	case !canRun:
-		status = fmt.Sprintf("(skipped)", reason)
-	case hasRun && reason != "":
-		status = fmt.Sprintf("(run %s)", reason)
-	case hasRun:
-		status = fmt.Sprintf("(run)")
-	default:
-		status = "(up to date)"
-	}
-
-	Log.Printf("  * %s: %s %s %s", t, action, status, time.Since(startTime))
-}
-
 func (b BaseTask) canRun() (bool, string) {
 	var (
 		err    error
@@ -199,12 +181,38 @@ func (b BaseTask) canRun() (bool, string) {
 	return run, reason
 }
 
-func (b BaseTask) handleError(err error) {
+func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, t Task, action Action, startTime time.Time) {
+	status := ""
 	switch {
-	case err == nil:
-	case !b.ContOnError:
-		Log.Panic(err)
+	case !canRun && reason != "":
+		status = fmt.Sprintf("(skipped %s)", reason)
+	case !canRun:
+		status = fmt.Sprintf("(skipped)", reason)
+	case hasRun && reason != "":
+		status = fmt.Sprintf("(run %s)", reason)
+	case hasRun:
+		status = fmt.Sprintf("(run)")
 	default:
-		Log.Printf("    ! %s", err)
+		status = "(up to date)"
+	}
+
+	Log.Printf("  * %s: %s %s %s", t, action, status, time.Since(startTime))
+}
+
+func (b BaseTask) Errorf(task fmt.Stringer, action Action, err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%s: %s\n    ! %s", task, action, err)
+}
+
+func (b BaseTask) handleError(err error) {
+	if err == nil {
+		return
+	}
+	if b.ContOnError {
+		Log.Printf("    ! %s\n", err)
+	} else {
+		Log.Fatalf("    ! %s\n", err)
 	}
 }

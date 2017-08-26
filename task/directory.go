@@ -50,17 +50,17 @@ func (d Directory) create() (bool, error) {
 	x, err := d.exists()
 	switch {
 	case err != nil:
-		return false, err
+		return false, d.Errorf(d, gopack.CreateAction, err)
 	case x:
 		return false, nil
 	default:
 		err := os.MkdirAll(d.Path, d.Perm)
 		if err != nil {
-			return false, err
+			return false, d.Errorf(d, gopack.CreateAction, err)
 		}
 
 		if d.Owner == "" && d.Group == "" {
-			return true, err
+			return true, d.Errorf(d, gopack.CreateAction, err)
 		}
 
 		var u *user.User
@@ -69,37 +69,37 @@ func (d Directory) create() (bool, error) {
 		if d.Owner == "" {
 			u, err = user.Current()
 			if err != nil {
-				return false, err
+				return false, d.Errorf(d, gopack.CreateAction, err)
 			}
 		} else {
 			u, err = user.Lookup(d.Owner)
 			if err != nil {
-				return false, err
+				return false, d.Errorf(d, gopack.CreateAction, err)
 			}
 			uid, err = strconv.Atoi(u.Uid)
 			if err != nil {
-				return false, err
+				return false, d.Errorf(d, gopack.CreateAction, err)
 			}
 		}
 
 		if d.Group == "" {
 			gid, err = strconv.Atoi(u.Gid)
 			if err != nil {
-				return false, err
+				return false, d.Errorf(d, gopack.CreateAction, err)
 			}
 		} else {
 			g, err := user.LookupGroup(d.Group)
 			if err != nil {
-				return false, err
+				return false, d.Errorf(d, gopack.CreateAction, err)
 			}
 			gid, err = strconv.Atoi(g.Gid)
 			if err != nil {
-				return false, err
+				return false, d.Errorf(d, gopack.CreateAction, err)
 			}
 		}
 
 		err = os.Chown(d.Path, uid, gid)
-		return true, err
+		return true, d.Errorf(d, gopack.CreateAction, err)
 	}
 }
 
@@ -107,13 +107,13 @@ func (d Directory) remove() (bool, error) {
 	x, err := d.exists()
 	switch {
 	case err != nil:
-		return false, err
+		return false, d.Errorf(d, gopack.RemoveAction, err)
 	case !x:
 		return false, nil
 	default:
 		//TODO: optionally allow RemoveAll
 		err := os.Remove(d.Path)
-		return true, err
+		return true, d.Errorf(d, gopack.RemoveAction, err)
 	}
 }
 

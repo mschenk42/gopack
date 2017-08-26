@@ -52,7 +52,7 @@ func TestCreateDirectoryValidOwner(t *testing.T) {
 
 	Directory{
 		Owner: "mschenk",
-		Group: "admin",
+		Group: "admin1",
 		Path:  d,
 		Perm:  0755,
 	}.Run(

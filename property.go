@@ -11,7 +11,7 @@ type Properties map[string]interface{}
 func (p *Properties) String() string {
 	b, err := json.MarshalIndent(p, "", "  ")
 	if err != nil {
-		Log.Panic(err)
+		Log.Fatalf("    ! %s", err)
 	}
 	return string(b)
 }
