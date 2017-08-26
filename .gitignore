@@ -57,3 +57,8 @@ Temporary Items
 .apdisk
 
 
+### https://raw.github.com/github/gitignore/e3fbfd31cc9831f812447a12dbd5f7a3c4885cc0/Global/Vagrant.gitignore
+
+.vagrant/
+
+
