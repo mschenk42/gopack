@@ -30,13 +30,10 @@ func run(pack *gopack.Pack) {
 	task.Template{
 		Name:   "mypack",
 		Path:   "/tmp/test/mypack.conf",
-		Source: nginx_template(),
+		Mode:   0755,
+		Source: `log_dir:{{ index . "nginx.log_dir"}}`,
 	}.Run(
 		pack.Props,
 		gopack.CreateAction,
 	)
-}
-
-func nginx_template() string {
-	return `log_dir: {{ index . "nginx.log_dir"}}`
 }

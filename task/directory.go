@@ -53,9 +53,11 @@ func (d Directory) create() (bool, error) {
 		found        bool
 		chgOwnership bool
 		chgDirectory bool
+		chgMode      bool
+		fi           os.FileInfo
 	)
 
-	if found, err = fexists(d.Path); err != nil {
+	if fi, found, err = fexists(d.Path); err != nil {
 		return false, d.Errorf(d, gopack.CreateAction, err)
 	}
 	if !found {
@@ -63,15 +65,20 @@ func (d Directory) create() (bool, error) {
 		if err = os.MkdirAll(d.Path, d.Mode); err != nil {
 			return false, d.Errorf(d, gopack.CreateAction, err)
 		}
+	} else {
+		if fi.Mode().Perm() != d.Mode.Perm() {
+			os.Chmod(d.Path, d.Mode)
+			chgMode = true
+		}
 	}
 
 	if d.Owner == "" && d.Group == "" {
-		return chgDirectory, nil
+		return chgDirectory || chgOwnership || chgMode, nil
 	}
 	if chgOwnership, err = chown(d.Path, d.Owner, d.Group); err != nil {
 		return false, d.Errorf(d, gopack.CreateAction, err)
 	}
-	return chgDirectory || chgOwnership, nil
+	return chgDirectory || chgOwnership || chgMode, nil
 }
 
 func (d Directory) remove() (bool, error) {
@@ -79,7 +86,7 @@ func (d Directory) remove() (bool, error) {
 		found bool
 		err   error
 	)
-	if found, err = fexists(d.Path); err != nil {
+	if _, found, err = fexists(d.Path); err != nil {
 		return false, d.Errorf(d, gopack.CreateAction, err)
 	}
 	if !found {
@@ -127,10 +134,17 @@ func chown(path, owner, group string) (bool, error) {
 	}
 
 	// check if ownership is differrent then provided
-	var uidNow, gidNow int
-	if uidNow, gidNow, err = fownership(path); err != nil {
+	var (
+		fi     os.FileInfo
+		uidNow int
+		gidNow int
+	)
+	if fi, err = os.Stat(path); err != nil {
 		return false, err
 	}
+	uidNow = int(fi.Sys().(*syscall.Stat_t).Uid)
+	gidNow = int(fi.Sys().(*syscall.Stat_t).Gid)
+
 	if uid == uidNow && gid == gidNow {
 		return false, nil
 	}
@@ -143,25 +157,16 @@ func chown(path, owner, group string) (bool, error) {
 	return true, nil
 }
 
-func fexists(path string) (bool, error) {
-	if _, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-func fownership(path string) (int, int, error) {
+func fexists(path string) (os.FileInfo, bool, error) {
 	var (
-		fi  os.FileInfo
 		err error
+		fi  os.FileInfo
 	)
 	if fi, err = os.Stat(path); err != nil {
-		return 0, 0, err
+		if os.IsNotExist(err) {
+			return fi, false, nil
+		}
+		return fi, false, err
 	}
-	uid := fi.Sys().(*syscall.Stat_t).Uid
-	gid := fi.Sys().(*syscall.Stat_t).Gid
-	return int(uid), int(gid), nil
+	return fi, true, nil
 }

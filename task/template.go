@@ -54,8 +54,10 @@ func (t Template) create() (bool, error) {
 		err          error
 		chgTemplate  bool
 		chgOwnership bool
+		chgMode      bool
 		fileExists   bool
 		checkSumDiff bool
+		fi           os.FileInfo
 	)
 
 	x := template.New(t.Name)
@@ -66,7 +68,7 @@ func (t Template) create() (bool, error) {
 	if err = x.Execute(bt, t.props); err != nil {
 		return false, t.Errorf(t, gopack.CreateAction, err)
 	}
-	if fileExists, err = fexists(t.Path); err != nil {
+	if fi, fileExists, err = fexists(t.Path); err != nil {
 		return false, t.Errorf(t, gopack.CreateAction, err)
 	}
 	if fileExists {
@@ -83,15 +85,20 @@ func (t Template) create() (bool, error) {
 			return false, t.Errorf(t, gopack.CreateAction, err)
 		}
 		chgTemplate = true
+	} else {
+		if fi.Mode().Perm() != t.Mode.Perm() {
+			os.Chmod(t.Path, t.Mode)
+			chgMode = true
+		}
 	}
 
 	// do we need to set ownership?
 	if t.Owner == "" && t.Group == "" {
-		return chgTemplate || chgOwnership, nil
+		return chgTemplate || chgOwnership || chgMode, nil
 	}
 	if chgOwnership, err = chown(t.Path, t.Owner, t.Group); err != nil {
-		return chgTemplate || chgOwnership, t.Errorf(t, gopack.CreateAction, err)
+		return chgTemplate || chgOwnership || chgMode, t.Errorf(t, gopack.CreateAction, err)
 	} else {
-		return chgTemplate || chgOwnership, nil
+		return chgTemplate || chgOwnership || chgMode, nil
 	}
 }
