@@ -29,6 +29,12 @@ type Pack struct {
 	NoRunDelayed bool
 }
 
+const (
+	PackHeaderFormat  = "\nPack: %s (%s) %s\n"
+	PackSectionFormat = "\n  [%s]\n"
+	PackErrorFormat   = "  ! %s\n"
+)
+
 func (p Pack) String() string {
 	return fmt.Sprintf("%s", p.Name)
 }
@@ -36,16 +42,16 @@ func (p Pack) String() string {
 func (p *Pack) Run(props *Properties) {
 	t := time.Now()
 	if p.RunFunc == nil {
-		Log.Fatalf("  ! run function nil for pack %s", p.Name)
+		Log.Fatalf(PackErrorFormat, fmt.Sprintf("run function nil for pack %s", p.Name))
 	}
 	p.Props.Merge(props)
-	Log.Printf("Pack: %s (start)", p)
+	Log.Printf(PackHeaderFormat, p, "start", "")
 	Log.Printf("%s", p.Props.Redact(p.Redact))
-	Log.Println("\n  [run]")
+	Log.Printf(PackSectionFormat, "run")
 	p.RunFunc(p)
 	if !p.NoRunDelayed {
-		Log.Println("\n  [delayed run]")
+		Log.Printf(PackSectionFormat, "delayed run")
 		DelayedNotify.Run()
 	}
-	Log.Printf("\nPack: %s (end) %s\n", p, time.Since(t))
+	Log.Printf(PackHeaderFormat, p, "end", time.Since(t))
 }

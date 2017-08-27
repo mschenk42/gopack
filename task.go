@@ -13,6 +13,7 @@ const (
 	EnableAction
 	InstallAction
 	LockAction
+	NilAction
 	NothingAction
 	RemoveAction
 	RunAction
@@ -36,6 +37,7 @@ var (
 		EnableAction:  "enable",
 		InstallAction: "install",
 		LockAction:    "lock",
+		NilAction:     "nil",
 		NothingAction: "nothing",
 		ReloadAction:  "reload",
 		RestartAction: "restart",
@@ -109,7 +111,8 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	b.props = task.Properties()
 
 	if len(runActions) == 0 {
-		b.handleError(fmt.Errorf("%s: nil\n    ! unable to run, no action given", task))
+		b.logRunStatus(false, false, "error", task, NilAction, time.Now())
+		b.handleError(fmt.Errorf("unable to run, no action given"))
 		return false
 	}
 
@@ -181,29 +184,34 @@ func (b BaseTask) canRun() (bool, string) {
 	return run, reason
 }
 
-func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, t Task, action Action, startTime time.Time) {
+const (
+	TaskLogInfoFormat  = "  * %s: %s (%s) %s"
+	TaskLogErrorFormat = "    ! %s"
+)
+
+func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, task Task, action Action, startTime time.Time) {
 	status := ""
 	switch {
 	case !canRun && reason != "":
-		status = fmt.Sprintf("(skipped %s)", reason)
+		status = fmt.Sprintf("skipped %s", reason)
 	case !canRun:
-		status = fmt.Sprintf("(skipped)", reason)
+		status = fmt.Sprintf("skipped", reason)
 	case hasRun && reason != "":
-		status = fmt.Sprintf("(run %s)", reason)
+		status = fmt.Sprintf("run %s", reason)
 	case hasRun:
-		status = fmt.Sprintf("(run)")
+		status = "run"
 	default:
-		status = "(up to date)"
+		status = "up to date"
 	}
 
-	Log.Printf("  * %s: %s %s %s", t, action, status, time.Since(startTime))
+	Log.Printf(TaskLogInfoFormat, task, action, status, time.Since(startTime))
 }
 
 func (b BaseTask) Errorf(task fmt.Stringer, action Action, err error) error {
 	if err == nil {
 		return nil
 	}
-	return fmt.Errorf("%s: %s\n    ! %s", task, action, err)
+	return fmt.Errorf("%s\n%s", fmt.Sprintf(TaskLogInfoFormat, task, action, "error", ""), fmt.Sprintf(TaskLogErrorFormat, err))
 }
 
 func (b BaseTask) handleError(err error) {
@@ -211,8 +219,8 @@ func (b BaseTask) handleError(err error) {
 		return
 	}
 	if b.ContOnError {
-		Log.Printf("    ! %s\n", err)
+		Log.Printf(TaskLogErrorFormat, err)
 	} else {
-		Log.Fatalf("    ! %s\n", err)
+		Log.Fatalf(TaskLogErrorFormat, err)
 	}
 }
