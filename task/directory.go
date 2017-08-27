@@ -5,15 +5,16 @@ import (
 	"os"
 	"os/user"
 	"strconv"
+	"syscall"
 
 	"github.com/mschenk42/gopack"
 )
 
 type Directory struct {
 	Path  string
-	Group string
 	Owner string
-	Perm  os.FileMode
+	Group string
+	Mode  os.FileMode
 
 	props *gopack.Properties
 	gopack.BaseTask
@@ -37,95 +38,130 @@ func (d Directory) registerActions() gopack.ActionMethods {
 }
 
 func (d *Directory) setDefaults() {
-	if d.Perm == 0 {
-		d.Perm = 0755
+	if d.Mode == 0 {
+		d.Mode = 0755
 	}
 }
 
 func (d Directory) String() string {
-	return fmt.Sprintf("directory %s Owner:%s Group:%s Perm:%s", d.Path, d.Owner, d.Group, d.Perm)
+	return fmt.Sprintf("directory %s %s %s %s", d.Path, d.Owner, d.Group, d.Mode)
 }
 
 func (d Directory) create() (bool, error) {
-	x, err := d.exists()
-	switch {
-	case err != nil:
+	var (
+		err          error
+		found        bool
+		chgOwnership bool
+		chgDirectory bool
+	)
+
+	if found, err = fexists(d.Path); err != nil {
 		return false, d.Errorf(d, gopack.CreateAction, err)
-	case x:
-		return false, nil
-	default:
-		err := os.MkdirAll(d.Path, d.Perm)
-		if err != nil {
+	}
+	if !found {
+		chgDirectory = true
+		if err = os.MkdirAll(d.Path, d.Mode); err != nil {
 			return false, d.Errorf(d, gopack.CreateAction, err)
 		}
-
-		if d.Owner == "" && d.Group == "" {
-			return true, d.Errorf(d, gopack.CreateAction, err)
-		}
-
-		var u *user.User
-		var gid, uid int
-
-		if d.Owner == "" {
-			u, err = user.Current()
-			if err != nil {
-				return false, d.Errorf(d, gopack.CreateAction, err)
-			}
-		} else {
-			u, err = user.Lookup(d.Owner)
-			if err != nil {
-				return false, d.Errorf(d, gopack.CreateAction, err)
-			}
-			uid, err = strconv.Atoi(u.Uid)
-			if err != nil {
-				return false, d.Errorf(d, gopack.CreateAction, err)
-			}
-		}
-
-		if d.Group == "" {
-			gid, err = strconv.Atoi(u.Gid)
-			if err != nil {
-				return false, d.Errorf(d, gopack.CreateAction, err)
-			}
-		} else {
-			g, err := user.LookupGroup(d.Group)
-			if err != nil {
-				return false, d.Errorf(d, gopack.CreateAction, err)
-			}
-			gid, err = strconv.Atoi(g.Gid)
-			if err != nil {
-				return false, d.Errorf(d, gopack.CreateAction, err)
-			}
-		}
-
-		err = os.Chown(d.Path, uid, gid)
-		return true, d.Errorf(d, gopack.CreateAction, err)
 	}
+
+	if d.Owner == "" && d.Group == "" {
+		return chgDirectory, nil
+	}
+	if chgOwnership, err = chown(d.Path, d.Owner, d.Group); err != nil {
+		return false, d.Errorf(d, gopack.CreateAction, err)
+	}
+	return chgDirectory || chgOwnership, nil
 }
 
 func (d Directory) remove() (bool, error) {
-	x, err := d.exists()
-	switch {
-	case err != nil:
-		return false, d.Errorf(d, gopack.RemoveAction, err)
-	case !x:
-		return false, nil
-	default:
-		//TODO: optionally allow RemoveAll
-		err := os.Remove(d.Path)
-		return true, d.Errorf(d, gopack.RemoveAction, err)
+	var (
+		found bool
+		err   error
+	)
+	if found, err = fexists(d.Path); err != nil {
+		return false, d.Errorf(d, gopack.CreateAction, err)
 	}
+	if !found {
+		return false, nil
+	}
+	//TODO: optionally allow RemoveAll
+	err = os.Remove(d.Path)
+	return true, d.Errorf(d, gopack.RemoveAction, err)
 }
 
-func (d Directory) exists() (bool, error) {
-	_, err := os.Stat(d.Path)
-	switch {
-	case err != nil:
+func chown(path, owner, group string) (bool, error) {
+	var (
+		err      error
+		u        *user.User
+		g        *user.Group
+		gid, uid int
+	)
+
+	// use current user if no owner provided
+	if owner == "" {
+		if u, err = user.Current(); err != nil {
+			return false, err
+		}
+	} else {
+		if u, err = user.Lookup(owner); err != nil {
+			return false, err
+		}
+	}
+	if uid, err = strconv.Atoi(u.Uid); err != nil {
+		return false, err
+	}
+
+	// use user's group if no group provided
+	if group == "" {
+		if gid, err = strconv.Atoi(u.Gid); err != nil {
+			return false, err
+		}
+	} else {
+		if g, err = user.LookupGroup(group); err != nil {
+			return false, err
+		}
+		if gid, err = strconv.Atoi(g.Gid); err != nil {
+			return false, err
+		}
+	}
+
+	// check if ownership is differrent then provided
+	var uidNow, gidNow int
+	if uidNow, gidNow, err = fownership(path); err != nil {
+		return false, err
+	}
+	if uid == uidNow && gid == gidNow {
+		return false, nil
+	}
+
+	// set ownership
+	if err = os.Chown(path, uid, gid); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func fexists(path string) (bool, error) {
+	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
 		return false, err
-	default:
-		return true, nil
 	}
+	return true, nil
+}
+
+func fownership(path string) (int, int, error) {
+	var (
+		fi  os.FileInfo
+		err error
+	)
+	if fi, err = os.Stat(path); err != nil {
+		return 0, 0, err
+	}
+	uid := fi.Sys().(*syscall.Stat_t).Uid
+	gid := fi.Sys().(*syscall.Stat_t).Gid
+	return int(uid), int(gid), nil
 }

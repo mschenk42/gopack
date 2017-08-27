@@ -14,7 +14,7 @@ func TestCreateDirectory(t *testing.T) {
 	d := "/tmp/create_dir"
 	Directory{
 		Path: d,
-		Perm: 0755,
+		Mode: 0755,
 	}.Run(
 		nil,
 		gopack.CreateAction,
@@ -35,7 +35,7 @@ func TestCreateExistingDirectory(t *testing.T) {
 
 	Directory{
 		Path: d,
-		Perm: 0755,
+		Mode: 0755,
 	}.Run(
 		nil,
 		gopack.CreateAction,
@@ -54,7 +54,7 @@ func TestCreateDirectoryValidOwner(t *testing.T) {
 		Owner: "mschenk",
 		Group: "admin",
 		Path:  d,
-		Perm:  0755,
+		Mode:  0755,
 	}.Run(
 		nil,
 		gopack.CreateAction,

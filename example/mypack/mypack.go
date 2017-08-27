@@ -21,9 +21,22 @@ func run(pack *gopack.Pack) {
 
 	task.Directory{
 		Path: "/tmp/test",
-		Perm: 0755,
+		Mode: 0755,
 	}.Run(
 		pack.Props,
 		gopack.CreateAction,
 	)
+
+	task.Template{
+		Name:   "mypack",
+		Path:   "/tmp/test/mypack.conf",
+		Source: nginx_template(),
+	}.Run(
+		pack.Props,
+		gopack.CreateAction,
+	)
+}
+
+func nginx_template() string {
+	return `log_dir: {{ index . "nginx.log_dir"}}`
 }
