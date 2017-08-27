@@ -28,7 +28,7 @@ func TestRunTask(t *testing.T) {
 	}
 
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, passKeywords), buf.String())
 	fmt.Print(buf.String())
 }
 
@@ -45,7 +45,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{NotIf: func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "skipped due to not_if"), buf.String())
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, "skipped due to not_if"), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -54,7 +54,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{NotIf: func() (bool, error) { return false, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "run due to not_if"), buf.String())
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, "run due to not_if"), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -63,7 +63,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{OnlyIf: func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "run due to only_if"), buf.String())
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, "run due to only_if"), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -72,7 +72,7 @@ func TestGuards(t *testing.T) {
 		BaseTask: BaseTask{OnlyIf: func() (bool, error) { return false, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "skipped due to only_if"), buf.String())
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, "skipped due to only_if"), buf.String())
 	fmt.Print(buf.String())
 
 	buf.Reset()
@@ -83,7 +83,7 @@ func TestGuards(t *testing.T) {
 			NotIf:  func() (bool, error) { return true, nil }},
 	}
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", "skipped due to not_if"), buf.String())
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, "skipped due to not_if"), buf.String())
 	fmt.Print(buf.String())
 }
 
@@ -102,7 +102,7 @@ func TestContOnError(t *testing.T) {
 	}
 
 	assert.NotPanics(func() { t1.Run(nil) })
-	assert.Regexp("! unable to run, no action given", buf.String())
+	assert.Regexp(`! unable to run, no action given`, buf.String())
 	fmt.Print(buf.String())
 }
 
@@ -125,8 +125,8 @@ func TestWhenRun(t *testing.T) {
 	t1.NotifyWhen(t2, CreateAction, CreateAction, nil, false)
 
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
-	assert.Regexp(fmt.Sprintf("task2 notified.*create.*%s", passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf(`task2 notified.*create.*%s`, passKeywords), buf.String())
 	fmt.Print(buf.String())
 }
 
@@ -156,11 +156,45 @@ func TestDelayedRun(t *testing.T) {
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.NotPanics(func() { t3.Run(nil, CreateAction) })
 	assert.NotPanics(func() { DelayedNotify.Run() })
-	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
-	assert.Regexp(fmt.Sprintf("task3.*create.*%s", passKeywords), buf.String())
-	re := regexp.MustCompile(fmt.Sprintf("task2 notified.*create.*%s", passKeywords))
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf(`task3.*create.*%s`, passKeywords), buf.String())
+	re := regexp.MustCompile(fmt.Sprintf(`task2 notified.*create.*%s`, passKeywords))
 	matches := re.FindAllString(buf.String(), -1)
 	assert.Exactlyf(1, len(matches), "task 2 notified more than once")
+
+	fmt.Print(buf.String())
+}
+
+func TestDelayedChainedRun(t *testing.T) {
+	assert := assert.New(t)
+
+	saveLogger := Log
+	buf := &bytes.Buffer{}
+	Log = log.New(buf, "", 0)
+	defer func() { Log = saveLogger }()
+
+	t1 := Task1{
+		Name: "task1 notified",
+	}
+
+	t2 := Task2{
+		Name: "task2 notified",
+	}
+
+	t3 := Task1{
+		Name: "task3",
+	}
+
+	t2.NotifyWhen(t1, CreateAction, CreateAction, nil, true)
+	t3.NotifyWhen(t2, CreateAction, CreateAction, nil, true)
+
+	assert.NotPanics(func() { t3.Run(nil, CreateAction) })
+	assert.NotPanics(func() { DelayedNotify.Run() })
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, passKeywords), buf.String())
+	assert.Regexp(fmt.Sprintf(`task3.*create.*%s`, passKeywords), buf.String())
+	re := regexp.MustCompile(fmt.Sprintf(`task(1|2) notified.*create.*%s`, passKeywords))
+	matches := re.FindAllString(buf.String(), -1)
+	assert.Exactlyf(2, len(matches), "notifications should be 2")
 
 	fmt.Print(buf.String())
 }

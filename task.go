@@ -146,10 +146,10 @@ func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction Action, props *
 	if b.notify[whenAction] == nil {
 		b.notify[whenAction] = map[string]func(){}
 	}
-	b.notify[whenAction][fmt.Sprintf("%s:%s", notify, forAction)] = func() {
-		if delayed {
-			DelayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(props, forAction) }
-		} else {
+	if delayed {
+		DelayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(props, forAction) }
+	} else {
+		b.notify[whenAction][fmt.Sprintf("%s:%s", notify, forAction)] = func() {
 			notify.Run(props, forAction)
 		}
 	}
