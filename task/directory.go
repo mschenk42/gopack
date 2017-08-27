@@ -142,8 +142,12 @@ func chown(path, owner, group string) (bool, error) {
 	if fi, err = os.Stat(path); err != nil {
 		return false, err
 	}
-	uidNow = int(fi.Sys().(*syscall.Stat_t).Uid)
-	gidNow = int(fi.Sys().(*syscall.Stat_t).Gid)
+	if fi.Sys() != nil {
+		uidNow = int(fi.Sys().(*syscall.Stat_t).Uid)
+		gidNow = int(fi.Sys().(*syscall.Stat_t).Gid)
+	} else {
+		return false, fmt.Errorf("syscall is nil for %s", path)
+	}
 
 	if uid == uidNow && gid == gidNow {
 		return false, nil
