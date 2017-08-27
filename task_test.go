@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -150,13 +151,17 @@ func TestDelayedRun(t *testing.T) {
 	}
 
 	t1.NotifyWhen(t2, CreateAction, CreateAction, nil, true)
+	t3.NotifyWhen(t2, CreateAction, CreateAction, nil, true)
 
 	assert.NotPanics(func() { t1.Run(nil, CreateAction) })
 	assert.NotPanics(func() { t3.Run(nil, CreateAction) })
 	assert.NotPanics(func() { DelayedNotify.Run() })
 	assert.Regexp(fmt.Sprintf("task1.*create.*%s", passKeywords), buf.String())
 	assert.Regexp(fmt.Sprintf("task3.*create.*%s", passKeywords), buf.String())
-	assert.Regexp(fmt.Sprintf("task2 notified.*create.*%s", passKeywords), buf.String())
+	re := regexp.MustCompile(fmt.Sprintf("task2 notified.*create.*%s", passKeywords))
+	matches := re.FindAllString(buf.String(), -1)
+	assert.Exactlyf(1, len(matches), "task 2 notified more than once")
+
 	fmt.Print(buf.String())
 }
 
