@@ -211,7 +211,8 @@ func (b BaseTask) Errorf(task fmt.Stringer, action Action, err error) error {
 	if err == nil {
 		return nil
 	}
-	return fmt.Errorf("%s\n%s", fmt.Sprintf(TaskLogInfoFormat, task, action, "error", ""), fmt.Sprintf(TaskLogErrorFormat, err))
+	Log.Printf(TaskLogInfoFormat, task, action, "error", time.Since(time.Now()))
+	return err
 }
 
 func (b BaseTask) handleError(err error) {
