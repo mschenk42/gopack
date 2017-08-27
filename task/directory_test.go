@@ -11,57 +11,59 @@ import (
 func TestCreateDirectory(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/create_dir"
+	const testDir = "/tmp/create-dir"
+
 	Directory{
-		Path: d,
+		Path: testDir,
 		Mode: 0755,
 	}.Run(
 		nil,
 		gopack.CreateAction,
 	)
-	defer os.Remove(d)
+	defer os.Remove(testDir)
 
-	_, err := os.Stat(d)
+	_, err := os.Stat(testDir)
 	assert.Nil(err)
 }
 
 func TestCreateExistingDirectory(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/create_existing_dir"
-	err := os.Mkdir(d, 0755)
-	defer os.Remove(d)
+	const testDir = "/tmp/create-existing-dir"
+
+	err := os.Mkdir(testDir, 0755)
+	defer os.Remove(testDir)
 	assert.Nil(err)
 
 	Directory{
-		Path: d,
+		Path: testDir,
 		Mode: 0755,
 	}.Run(
 		nil,
 		gopack.CreateAction,
 	)
 
-	_, err = os.Stat(d)
+	_, err = os.Stat(testDir)
 	assert.Nil(err)
 }
 
 func TestCreateDirectoryValidOwner(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/create_dir_owner"
+	const testDir = "/tmp/create-dir-owner"
 
 	Directory{
 		Owner: "mschenk",
 		Group: "admin",
-		Path:  d,
+		Path:  testDir,
 		Mode:  0755,
 	}.Run(
 		nil,
 		gopack.CreateAction,
 	)
-	defer os.Remove(d)
+	defer os.Remove(testDir)
 
-	_, err := os.Stat(d)
+	_, err := os.Stat(testDir)
 	assert.Nil(err)
 
 }
@@ -69,36 +71,38 @@ func TestCreateDirectoryValidOwner(t *testing.T) {
 func TestRemoveDirectory(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/remove_dir"
-	err := os.Mkdir(d, 0755)
-	defer os.Remove(d)
+	const testDir = "/tmp/remove-dir"
+
+	err := os.Mkdir(testDir, 0755)
+	defer os.Remove(testDir)
 	assert.Nil(err)
 
 	Directory{
-		Path: d,
+		Path: testDir,
 	}.Run(
 		nil,
 		gopack.RemoveAction,
 	)
 
-	_, err = os.Stat(d)
+	_, err = os.Stat(testDir)
 	assert.NotNil(err)
 }
 
 func TestRemoveMissingDirectory(t *testing.T) {
 	assert := assert.New(t)
 
-	d := "/tmp/remove_missing_dir"
-	_, err := os.Stat(d)
+	const testDir = "/tmp/remove-missing-dir"
+
+	_, err := os.Stat(testDir)
 	assert.NotNil(err)
 
 	Directory{
-		Path: d,
+		Path: testDir,
 	}.Run(
 		nil,
 		gopack.RemoveAction,
 	)
 
-	_, err = os.Stat(d)
+	_, err = os.Stat(testDir)
 	assert.NotNil(err)
 }
