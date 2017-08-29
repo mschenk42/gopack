@@ -127,7 +127,7 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	for _, a := range runActions {
 		f, found := regActions.actionFunc(a)
 		if !found {
-			b.handleError(b.Errorf(task, a, ErrUnknownAction))
+			b.handleError(b.TaskError(task, a, ErrUnknownAction))
 			return hasRun
 		}
 		hasRun, err := f()
@@ -207,7 +207,7 @@ func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, task Task, ac
 	Log.Printf(TaskLogInfoFormat, task, action, status, time.Since(startTime))
 }
 
-func (b BaseTask) Errorf(task fmt.Stringer, action Action, err error) error {
+func (b BaseTask) TaskError(task fmt.Stringer, action Action, err error) error {
 	if err == nil {
 		return nil
 	}

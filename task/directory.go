@@ -23,7 +23,7 @@ type Directory struct {
 func (d Directory) Run(props *gopack.Properties, runActions ...gopack.Action) bool {
 	d.props = props
 	d.setDefaults()
-	return d.BaseTask.RunActions(&d, d.registerActions(), runActions)
+	return d.RunActions(&d, d.registerActions(), runActions)
 }
 
 func (d Directory) Properties() *gopack.Properties {
@@ -58,12 +58,12 @@ func (d Directory) create() (bool, error) {
 	)
 
 	if fi, found, err = fexists(d.Path); err != nil {
-		return false, d.Errorf(d, gopack.CreateAction, err)
+		return false, d.TaskError(d, gopack.CreateAction, err)
 	}
 	if !found {
 		chgDirectory = true
 		if err = os.MkdirAll(d.Path, d.Mode); err != nil {
-			return false, d.Errorf(d, gopack.CreateAction, err)
+			return false, d.TaskError(d, gopack.CreateAction, err)
 		}
 	} else {
 		if fi.Mode().Perm() != d.Mode.Perm() {
@@ -76,7 +76,7 @@ func (d Directory) create() (bool, error) {
 		return chgDirectory || chgOwnership || chgMode, nil
 	}
 	if chgOwnership, err = chown(d.Path, d.Owner, d.Group); err != nil {
-		return false, d.Errorf(d, gopack.CreateAction, err)
+		return false, d.TaskError(d, gopack.CreateAction, err)
 	}
 	return chgDirectory || chgOwnership || chgMode, nil
 }
@@ -87,14 +87,14 @@ func (d Directory) remove() (bool, error) {
 		err   error
 	)
 	if _, found, err = fexists(d.Path); err != nil {
-		return false, d.Errorf(d, gopack.CreateAction, err)
+		return false, d.TaskError(d, gopack.CreateAction, err)
 	}
 	if !found {
 		return false, nil
 	}
 	//TODO: optionally allow RemoveAll
 	err = os.Remove(d.Path)
-	return true, d.Errorf(d, gopack.RemoveAction, err)
+	return true, d.TaskError(d, gopack.RemoveAction, err)
 }
 
 func chown(path, owner, group string) (bool, error) {
@@ -159,18 +159,4 @@ func chown(path, owner, group string) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func fexists(path string) (os.FileInfo, bool, error) {
-	var (
-		err error
-		fi  os.FileInfo
-	)
-	if fi, err = os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			return fi, false, nil
-		}
-		return fi, false, err
-	}
-	return fi, true, nil
 }

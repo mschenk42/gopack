@@ -26,7 +26,7 @@ type Template struct {
 func (t Template) Run(props *gopack.Properties, runActions ...gopack.Action) bool {
 	t.props = props
 	t.setDefaults()
-	return t.BaseTask.RunActions(&t, t.registerActions(), runActions)
+	return t.RunActions(&t, t.registerActions(), runActions)
 }
 
 func (t Template) Properties() *gopack.Properties {
@@ -62,19 +62,19 @@ func (t Template) create() (bool, error) {
 
 	x := template.New(t.Name)
 	if x, err = x.Parse(t.Source); err != nil {
-		return false, t.Errorf(t, gopack.CreateAction, err)
+		return false, t.TaskError(t, gopack.CreateAction, err)
 	}
 	bt := &bytes.Buffer{}
 	if err = x.Execute(bt, t.props); err != nil {
-		return false, t.Errorf(t, gopack.CreateAction, err)
+		return false, t.TaskError(t, gopack.CreateAction, err)
 	}
 	if fi, fileExists, err = fexists(t.Path); err != nil {
-		return false, t.Errorf(t, gopack.CreateAction, err)
+		return false, t.TaskError(t, gopack.CreateAction, err)
 	}
 	if fileExists {
 		bf := []byte{}
 		if bf, err = ioutil.ReadFile(t.Path); err != nil {
-			return false, t.Errorf(t, gopack.CreateAction, err)
+			return false, t.TaskError(t, gopack.CreateAction, err)
 		}
 		sumt := sha256.Sum256(bt.Bytes())
 		sumf := sha256.Sum256(bf)
@@ -82,7 +82,7 @@ func (t Template) create() (bool, error) {
 	}
 	if !fileExists || checkSumDiff {
 		if err = ioutil.WriteFile(t.Path, bt.Bytes(), t.Mode); err != nil {
-			return false, t.Errorf(t, gopack.CreateAction, err)
+			return false, t.TaskError(t, gopack.CreateAction, err)
 		}
 		chgTemplate = true
 	} else {
@@ -97,7 +97,7 @@ func (t Template) create() (bool, error) {
 		return chgTemplate || chgOwnership || chgMode, nil
 	}
 	if chgOwnership, err = chown(t.Path, t.Owner, t.Group); err != nil {
-		return chgTemplate || chgOwnership || chgMode, t.Errorf(t, gopack.CreateAction, err)
+		return chgTemplate || chgOwnership || chgMode, t.TaskError(t, gopack.CreateAction, err)
 	} else {
 		return chgTemplate || chgOwnership || chgMode, nil
 	}
