@@ -14,23 +14,18 @@ import (
 type Template struct {
 	Name   string
 	Source string
+	Data   gopack.Properties
 	Path   string
 	Owner  string
 	Group  string
 	Mode   os.FileMode
 
-	props *gopack.Properties
 	gopack.BaseTask
 }
 
-func (t Template) Run(props *gopack.Properties, runActions ...gopack.Action) bool {
-	t.props = props
+func (t Template) Run(runActions ...gopack.Action) bool {
 	t.setDefaults()
 	return t.RunActions(&t, t.registerActions(), runActions)
-}
-
-func (t Template) Properties() *gopack.Properties {
-	return t.props
 }
 
 func (t Template) registerActions() gopack.ActionMethods {
@@ -65,7 +60,7 @@ func (t Template) create() (bool, error) {
 		return false, t.TaskError(t, gopack.CreateAction, err)
 	}
 	bt := &bytes.Buffer{}
-	if err = x.Execute(bt, t.props); err != nil {
+	if err = x.Execute(bt, t.Data); err != nil {
 		return false, t.TaskError(t, gopack.CreateAction, err)
 	}
 	if fi, fileExists, err = fexists(t.Path); err != nil {

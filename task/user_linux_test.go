@@ -1,3 +1,5 @@
+// +build linux
+
 package task
 
 import (
@@ -7,12 +9,7 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-
 	User{
 		UserName: "test",
-	}.Run(
-		nil,
-		gopack.CreateAction,
-	)
-
+	}.Run(gopack.CreateAction)
 }

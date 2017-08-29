@@ -16,10 +16,7 @@ func TestCreateDirectory(t *testing.T) {
 	Directory{
 		Path: testDir,
 		Mode: 0755,
-	}.Run(
-		nil,
-		gopack.CreateAction,
-	)
+	}.Run(gopack.CreateAction)
 	defer os.Remove(testDir)
 
 	_, err := os.Stat(testDir)
@@ -38,10 +35,7 @@ func TestCreateExistingDirectory(t *testing.T) {
 	Directory{
 		Path: testDir,
 		Mode: 0755,
-	}.Run(
-		nil,
-		gopack.CreateAction,
-	)
+	}.Run(gopack.CreateAction)
 
 	_, err = os.Stat(testDir)
 	assert.Nil(err)
@@ -57,10 +51,7 @@ func TestCreateDirectoryValidOwner(t *testing.T) {
 		Group: "admin",
 		Path:  testDir,
 		Mode:  0755,
-	}.Run(
-		nil,
-		gopack.CreateAction,
-	)
+	}.Run(gopack.CreateAction)
 	defer os.Remove(testDir)
 
 	_, err := os.Stat(testDir)
@@ -79,10 +70,7 @@ func TestRemoveDirectory(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-	}.Run(
-		nil,
-		gopack.RemoveAction,
-	)
+	}.Run(gopack.RemoveAction)
 
 	_, err = os.Stat(testDir)
 	assert.NotNil(err)
@@ -98,10 +86,7 @@ func TestRemoveMissingDirectory(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-	}.Run(
-		nil,
-		gopack.RemoveAction,
-	)
+	}.Run(gopack.RemoveAction)
 
 	_, err = os.Stat(testDir)
 	assert.NotNil(err)

@@ -64,7 +64,6 @@ type BaseTask struct {
 	NotIf       GuardFunc
 	ContOnError bool
 
-	props  *Properties
 	notify actionTaskRunSet
 }
 
@@ -80,13 +79,12 @@ func (d *taskRunSet) Run() {
 }
 
 type Runner interface {
-	Run(props *Properties, actions ...Action) bool
+	Run(actions ...Action) bool
 }
 
 type Task interface {
 	Runner
 	fmt.Stringer
-	Properties() *Properties
 }
 
 func (a Action) name() (string, bool) {
@@ -108,8 +106,6 @@ func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
 }
 
 func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []Action) bool {
-	b.props = task.Properties()
-
 	if len(runActions) == 0 {
 		b.logRunStatus(false, false, "error", task, NilAction, time.Now())
 		b.handleError(fmt.Errorf("unable to run, no action given"))
@@ -139,7 +135,7 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	return hasRun
 }
 
-func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction Action, props *Properties, delayed bool) {
+func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction Action, delayed bool) {
 	if b.notify == nil {
 		b.notify = actionTaskRunSet{}
 	}
@@ -147,10 +143,10 @@ func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction Action, props *
 		b.notify[whenAction] = map[string]func(){}
 	}
 	if delayed {
-		DelayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(props, forAction) }
+		DelayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(forAction) }
 	} else {
 		b.notify[whenAction][fmt.Sprintf("%s:%s", notify, forAction)] = func() {
-			notify.Run(props, forAction)
+			notify.Run(forAction)
 		}
 	}
 }

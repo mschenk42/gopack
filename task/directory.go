@@ -16,18 +16,12 @@ type Directory struct {
 	Group string
 	Mode  os.FileMode
 
-	props *gopack.Properties
 	gopack.BaseTask
 }
 
-func (d Directory) Run(props *gopack.Properties, runActions ...gopack.Action) bool {
-	d.props = props
+func (d Directory) Run(runActions ...gopack.Action) bool {
 	d.setDefaults()
 	return d.RunActions(&d, d.registerActions(), runActions)
-}
-
-func (d Directory) Properties() *gopack.Properties {
-	return d.props
 }
 
 func (d Directory) registerActions() gopack.ActionMethods {

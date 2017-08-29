@@ -15,18 +15,12 @@ type User struct {
 	Group    string
 	Home     string
 
-	props *gopack.Properties
 	gopack.BaseTask
 }
 
-func (u User) Run(props *gopack.Properties, runActions ...gopack.Action) bool {
-	u.props = props
+func (u User) Run(runActions ...gopack.Action) bool {
 	u.setDefaults()
 	return u.RunActions(&u, u.registerActions(), runActions)
-}
-
-func (u User) Properties() *gopack.Properties {
-	return u.props
 }
 
 func (u User) registerActions() gopack.ActionMethods {

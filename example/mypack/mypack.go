@@ -22,19 +22,16 @@ func run(pack *gopack.Pack) {
 	task.User{
 		UserName: "mypack",
 		Group:    "sudo",
-	}.Run(
-		pack.Props,
-		gopack.CreateAction,
-	)
+	}.Run(gopack.CreateAction)
 
 	task.Directory{
 		Path:  "/tmp/test",
 		Owner: "mypack",
 		Mode:  0755,
-	}.Run(
-		pack.Props,
-		gopack.CreateAction,
-	)
+	}.Run(gopack.CreateAction)
+
+	data := *pack.Props
+	data["mykey"] = "key"
 
 	task.Template{
 		Name:   "mypack",
@@ -42,15 +39,10 @@ func run(pack *gopack.Pack) {
 		Owner:  "mypack",
 		Mode:   0755,
 		Source: `log_dir:{{ index . "nginx.log_dir"}}`,
-	}.Run(
-		pack.Props,
-		gopack.CreateAction,
-	)
+		Data:   data,
+	}.Run(gopack.CreateAction)
 
 	task.User{
 		UserName: "mypack",
-	}.Run(
-		pack.Props,
-		gopack.RemoveAction,
-	)
+	}.Run(gopack.RemoveAction)
 }

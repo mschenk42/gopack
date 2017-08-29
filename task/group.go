@@ -9,18 +9,12 @@ import (
 type Group struct {
 	GroupName string
 
-	props *gopack.Properties
 	gopack.BaseTask
 }
 
-func (u Group) Run(props *gopack.Properties, runActions ...gopack.Action) bool {
-	u.props = props
+func (u Group) Run(runActions ...gopack.Action) bool {
 	u.setDefaults()
 	return u.RunActions(&u, u.registerActions(), runActions)
-}
-
-func (u Group) Properties() *gopack.Properties {
-	return u.props
 }
 
 func (u Group) registerActions() gopack.ActionMethods {
