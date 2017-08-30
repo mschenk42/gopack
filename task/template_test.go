@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/mschenk42/gopack"
@@ -14,7 +15,6 @@ import (
 
 func TestCreateTemplate(t *testing.T) {
 	assert := assert.New(t)
-
 	const testDir = "/tmp/test-create-template"
 
 	Directory{
@@ -27,9 +27,10 @@ func TestCreateTemplate(t *testing.T) {
 	data["nginx.log_dir"] = "/var/log/nginx"
 
 	Template{
-		Name:   "mypack",
-		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode:   0755,
+		Name: "mypack",
+		Path: fmt.Sprintf("%s/mypack.conf", testDir),
+		Mode: 0755,
+
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Data:   data,
 	}.Run(gopack.CreateAction)
@@ -41,7 +42,6 @@ func TestCreateTemplate(t *testing.T) {
 
 func TestUpToDateTemplate(t *testing.T) {
 	assert := assert.New(t)
-
 	const testDir = "/tmp/test-uptodate-template"
 
 	saveLogger := gopack.Log
@@ -59,29 +59,31 @@ func TestUpToDateTemplate(t *testing.T) {
 	data["nginx.log_dir"] = "/var/log/nginx"
 
 	Template{
-		Name:   "mypack",
-		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode:   0755,
+		Name: "mypack",
+		Path: fmt.Sprintf("%s/mypack.conf", testDir),
+		Mode: 0755,
+
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Data:   data,
 	}.Run(gopack.CreateAction)
 
 	Template{
-		Name:   "mypack",
-		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode:   0755,
+		Name: "mypack",
+		Path: fmt.Sprintf("%s/mypack.conf", testDir),
+		Mode: 0755,
+
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Data:   data,
 	}.Run(gopack.CreateAction)
 
-	assert.Regexp(`.*template mypack /tmp/.*/mypack.conf.*create.*(up to date).*`, buf.String())
+	re := regexp.MustCompile(`.*template mypack /tmp/.*/mypack.conf.*create.*(up to date).*`)
+	assert.Equal(1, len(re.FindAllSubmatch(buf.Bytes(), -1)))
 	fmt.Print(buf.String())
 }
 
-func TestNotUpToDateTemplate(t *testing.T) {
+func TestChangedTemplate(t *testing.T) {
 	assert := assert.New(t)
-
-	const testDir = "/tmp/test-not-uptodate-template"
+	const testDir = "/tmp/test-changed-template"
 
 	saveLogger := gopack.Log
 	buf := &bytes.Buffer{}
@@ -98,9 +100,10 @@ func TestNotUpToDateTemplate(t *testing.T) {
 	data["nginx.log_dir"] = "/var/log/nginx"
 
 	Template{
-		Name:   "mypack",
-		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode:   0755,
+		Name: "mypack",
+		Path: fmt.Sprintf("%s/mypack.conf", testDir),
+		Mode: 0755,
+
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Data:   data,
 	}.Run(gopack.CreateAction)
@@ -108,21 +111,26 @@ func TestNotUpToDateTemplate(t *testing.T) {
 	data["nginx.log_dir"] = "/opt/log/nginx"
 
 	Template{
-		Name:   "mypack",
-		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode:   0755,
+		Name: "mypack",
+		Path: fmt.Sprintf("%s/mypack.conf", testDir),
+		Mode: 0755,
+
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Data:   data,
 	}.Run(gopack.CreateAction)
 
-	assert.NotRegexp(`.*template mypack /tmp/.*/mypack.conf.*create.*(up to date).*`, buf.String())
+	b, err := ioutil.ReadFile(fmt.Sprintf("%s/mypack.conf", testDir))
+	assert.NoError(err)
+	assert.Regexp(`log_dir: /opt/log/nginx`, string(b))
+
+	re := regexp.MustCompile(`.*template mypack /tmp/.*/mypack.conf.*create.*(run).*`)
+	assert.Equal(2, len(re.FindAllSubmatch(buf.Bytes(), -1)))
 	fmt.Print(buf.String())
 }
 
-func TestModeUpdateTemplate(t *testing.T) {
+func TestModeChangedTemplate(t *testing.T) {
 	assert := assert.New(t)
-
-	const testDir = "/tmp/test-mode-update-template"
+	const testDir = "/tmp/test-mode-changed-template"
 
 	saveLogger := gopack.Log
 	buf := &bytes.Buffer{}
@@ -150,7 +158,9 @@ func TestModeUpdateTemplate(t *testing.T) {
 		Source: `log_dir:`,
 	}.Run(gopack.CreateAction)
 
+	assert.Regexp(`.*-rwxr-xr-x:.*`, buf.String())
 	assert.Regexp(`.*-rwxrwxr-x:.*`, buf.String())
-	assert.NotRegexp(`.*template mypack /tmp/.*/mypack.conf.*create.*(up to date).*`, buf.String())
+	re := regexp.MustCompile(`.*template mypack /tmp/.*/mypack.conf.*create.*(run).*`)
+	assert.Equal(2, len(re.FindAllSubmatch(buf.Bytes(), -1)))
 	fmt.Print(buf.String())
 }
