@@ -45,27 +45,41 @@ func (u User) create() (bool, error) {
 			return false, u.TaskError(u, gopack.CreateAction, err)
 		}
 	}
-	switch runtime.GOOS {
-	case "linux":
-		return u.createUserLinux()
-	default:
-		return false, u.TaskError(u, gopack.CreateAction, fmt.Errorf("not supported for %s", runtime.GOOS))
+	if err := createUserCmd(u); err != nil {
+		return false, u.TaskError(u, gopack.CreateAction, err)
 	}
+	return true, nil
 }
 
 func (u User) remove() (bool, error) {
 	if _, err := user.Lookup(u.UserName); err != nil {
 		return false, u.TaskError(u, gopack.RemoveAction, err)
 	}
+	if err := removeUserCmd(u); err != nil {
+		return false, u.TaskError(u, gopack.RemoveAction, err)
+	}
+	return true, nil
+}
+
+func createUserCmd(u User) error {
 	switch runtime.GOOS {
 	case "linux":
-		return u.removeUserLinux()
+		return createUserLinux(u)
 	default:
-		return false, u.TaskError(u, gopack.RemoveAction, fmt.Errorf("not supported for %s", runtime.GOOS))
+		return fmt.Errorf("not supported for %s", runtime.GOOS)
 	}
 }
 
-func (u User) createUserLinux() (bool, error) {
+func removeUserCmd(u User) error {
+	switch runtime.GOOS {
+	case "linux":
+		return removeUserLinux(u)
+	default:
+		return fmt.Errorf("not supported for %s", runtime.GOOS)
+	}
+}
+
+func createUserLinux(u User) error {
 	x := []string{}
 	if u.Group != "" {
 		x = append(x, "-g", u.Group)
@@ -75,14 +89,12 @@ func (u User) createUserLinux() (bool, error) {
 	}
 	x = append(x, u.UserName)
 	if _, err := execCmd(time.Second*10, "useradd", x...); err != nil {
-		return false, u.TaskError(u, gopack.CreateAction, err)
+		return err
 	}
-	return true, nil
+	return nil
 }
 
-func (u User) removeUserLinux() (bool, error) {
-	if _, err := execCmd(time.Second*10, "userdel", u.UserName); err != nil {
-		return false, u.TaskError(u, gopack.RemoveAction, err)
-	}
-	return true, nil
+func removeUserLinux(u User) error {
+	_, err := execCmd(time.Second*10, "userdel", u.UserName)
+	return err
 }
