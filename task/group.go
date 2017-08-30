@@ -2,39 +2,87 @@ package task
 
 import (
 	"fmt"
+	"os/user"
+	"runtime"
+	"strings"
+	"time"
 
 	"github.com/mschenk42/gopack"
 )
 
 type Group struct {
-	GroupName string
+	Name string
 
 	gopack.BaseTask
 }
 
-func (u Group) Run(runActions ...gopack.Action) bool {
-	u.setDefaults()
-	return u.RunActions(&u, u.registerActions(), runActions)
+func (g Group) Run(runActions ...gopack.Action) bool {
+	g.setDefaults()
+	return g.RunActions(&g, g.registerActions(), runActions)
 }
 
-func (u Group) registerActions() gopack.ActionMethods {
+func (g Group) registerActions() gopack.ActionMethods {
 	return gopack.ActionMethods{
-		gopack.CreateAction: u.create,
-		gopack.RemoveAction: u.remove,
+		gopack.CreateAction: g.create,
+		gopack.RemoveAction: g.remove,
 	}
 }
 
-func (u *Group) setDefaults() {
+func (g *Group) setDefaults() {
 }
 
-func (u Group) String() string {
-	return fmt.Sprintf("group %s", u.GroupName)
+func (g Group) String() string {
+	return fmt.Sprintf("group %s", g.Name)
 }
 
-func (u Group) create() (bool, error) {
+func (g Group) create() (bool, error) {
+	if _, err := user.LookupGroup(g.Name); err == nil {
+		return false, nil
+	} else {
+		if !strings.Contains(err.Error(), "unknown group") {
+			return false, g.TaskError(g, gopack.CreateAction, err)
+		}
+	}
+	if err := createGroupCmd(g); err != nil {
+		return false, g.TaskError(g, gopack.CreateAction, err)
+	}
 	return true, nil
 }
 
-func (u Group) remove() (bool, error) {
+func (g Group) remove() (bool, error) {
+	if _, err := user.LookupGroup(g.Name); err != nil {
+		return false, g.TaskError(g, gopack.RemoveAction, err)
+	}
+	if err := removeGroupCmd(g); err != nil {
+		return false, g.TaskError(g, gopack.RemoveAction, err)
+	}
 	return true, nil
+}
+
+func createGroupCmd(g Group) error {
+	switch runtime.GOOS {
+	case "linux":
+		return createGroupLinux(g)
+	default:
+		return fmt.Errorf("not supported for %s", runtime.GOOS)
+	}
+}
+
+func removeGroupCmd(g Group) error {
+	switch runtime.GOOS {
+	case "linux":
+		return removeGroupLinux(g)
+	default:
+		return fmt.Errorf("not supported for %s", runtime.GOOS)
+	}
+}
+
+func createGroupLinux(g Group) error {
+	_, err := execCmd(time.Second*10, "groupadd", g.Name)
+	return err
+}
+
+func removeGroupLinux(g Group) error {
+	_, err := execCmd(time.Second*10, "groupdel", g.Name)
+	return err
 }

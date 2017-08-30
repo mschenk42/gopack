@@ -19,14 +19,13 @@ func Run(props *gopack.Properties) {
 
 func run(pack *gopack.Pack) {
 
-	task.User{
-		UserName: "mypack",
-		Group:    "sudo",
-	}.Run(gopack.CreateAction)
+	task.Group{Name: "mypack"}.Run(gopack.CreateAction)
+	task.User{Name: "mypack", Group: "mypack"}.Run(gopack.CreateAction)
 
 	task.Directory{
 		Path:  "/tmp/test",
 		Owner: "mypack",
+		Group: "mypack",
 		Mode:  0755,
 	}.Run(gopack.CreateAction)
 
@@ -39,10 +38,6 @@ func run(pack *gopack.Pack) {
 		Owner:  "mypack",
 		Mode:   0755,
 		Source: `log_dir:{{ index . "nginx.log_dir"}}`,
-		Data:   data,
+		Props:  data,
 	}.Run(gopack.CreateAction)
-
-	task.User{
-		UserName: "mypack",
-	}.Run(gopack.RemoveAction)
 }

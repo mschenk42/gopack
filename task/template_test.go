@@ -32,7 +32,7 @@ func TestCreateTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Data:   data,
+		Props:  data,
 	}.Run(gopack.CreateAction)
 
 	b, err := ioutil.ReadFile(fmt.Sprintf("%s/mypack.conf", testDir))
@@ -64,7 +64,7 @@ func TestUpToDateTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Data:   data,
+		Props:  data,
 	}.Run(gopack.CreateAction)
 
 	Template{
@@ -73,7 +73,7 @@ func TestUpToDateTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Data:   data,
+		Props:  data,
 	}.Run(gopack.CreateAction)
 
 	re := regexp.MustCompile(`.*template mypack /tmp/.*/mypack.conf.*create.*(up to date).*`)
@@ -105,7 +105,7 @@ func TestChangedTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Data:   data,
+		Props:  data,
 	}.Run(gopack.CreateAction)
 
 	data["nginx.log_dir"] = "/opt/log/nginx"
@@ -116,7 +116,7 @@ func TestChangedTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Data:   data,
+		Props:  data,
 	}.Run(gopack.CreateAction)
 
 	b, err := ioutil.ReadFile(fmt.Sprintf("%s/mypack.conf", testDir))

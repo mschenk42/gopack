@@ -14,7 +14,7 @@ import (
 type Template struct {
 	Name   string
 	Source string
-	Data   gopack.Properties
+	Props  gopack.Properties
 	Path   string
 	Owner  string
 	Group  string
@@ -60,7 +60,7 @@ func (t Template) create() (bool, error) {
 		return false, t.TaskError(t, gopack.CreateAction, err)
 	}
 	bt := &bytes.Buffer{}
-	if err = x.Execute(bt, t.Data); err != nil {
+	if err = x.Execute(bt, t.Props); err != nil {
 		return false, t.TaskError(t, gopack.CreateAction, err)
 	}
 	if fi, fileExists, err = fexists(t.Path); err != nil {

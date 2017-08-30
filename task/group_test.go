@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateUserLinux(t *testing.T) {
+func TestCreateGroupLinux(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("skipping linux only test")
 	}
@@ -23,7 +23,7 @@ func TestCreateUserLinux(t *testing.T) {
 	gopack.Log = log.New(buf, "", 0)
 	defer func() { gopack.Log = saveLogger }()
 
-	x := User{
+	x := Group{
 		Name: "test",
 	}
 
@@ -32,13 +32,13 @@ func TestCreateUserLinux(t *testing.T) {
 	}()
 
 	assert.NotPanics(func() { x.Run(gopack.CreateAction) })
-	assert.Regexp(`.*user test.*create.*(run)`, buf.String())
-	_, err := user.Lookup(x.Name)
+	assert.Regexp(`.*group test.*create.*(run)`, buf.String())
+	_, err := user.LookupGroup(x.Name)
 	assert.NoError(err)
 	fmt.Print(buf.String())
 }
 
-func TestRemoveUserLinux(t *testing.T) {
+func TestRemoveGroupLinux(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("skipping linux only test")
 	}
@@ -49,7 +49,7 @@ func TestRemoveUserLinux(t *testing.T) {
 	gopack.Log = log.New(buf, "", 0)
 	defer func() { gopack.Log = saveLogger }()
 
-	x := User{
+	x := Group{
 		Name: "test",
 	}
 
@@ -59,8 +59,8 @@ func TestRemoveUserLinux(t *testing.T) {
 
 	assert.NotPanics(func() { x.Run(gopack.CreateAction) })
 	assert.NotPanics(func() { x.Run(gopack.RemoveAction) })
-	assert.Regexp(`.*user test.*remove.*(run)`, buf.String())
-	_, err := user.Lookup(x.Name)
+	assert.Regexp(`.*group test.*remove.*(run)`, buf.String())
+	_, err := user.LookupGroup(x.Name)
 	assert.NotNil(err)
 	fmt.Print(buf.String())
 }

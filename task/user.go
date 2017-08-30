@@ -11,9 +11,9 @@ import (
 )
 
 type User struct {
-	UserName string
-	Group    string
-	Home     string
+	Name  string
+	Group string
+	Home  string
 
 	gopack.BaseTask
 }
@@ -34,11 +34,11 @@ func (u *User) setDefaults() {
 }
 
 func (u User) String() string {
-	return fmt.Sprintf("user %s %s %s", u.UserName, u.Group, u.Home)
+	return fmt.Sprintf("user %s %s %s", u.Name, u.Group, u.Home)
 }
 
 func (u User) create() (bool, error) {
-	if _, err := user.Lookup(u.UserName); err == nil {
+	if _, err := user.Lookup(u.Name); err == nil {
 		return false, nil
 	} else {
 		if !strings.Contains(err.Error(), "unknown user") {
@@ -52,7 +52,7 @@ func (u User) create() (bool, error) {
 }
 
 func (u User) remove() (bool, error) {
-	if _, err := user.Lookup(u.UserName); err != nil {
+	if _, err := user.Lookup(u.Name); err != nil {
 		return false, u.TaskError(u, gopack.RemoveAction, err)
 	}
 	if err := removeUserCmd(u); err != nil {
@@ -87,7 +87,7 @@ func createUserLinux(u User) error {
 	if u.Home != "" {
 		x = append(x, "-d", u.Home)
 	}
-	x = append(x, u.UserName)
+	x = append(x, u.Name)
 	if _, err := execCmd(time.Second*10, "useradd", x...); err != nil {
 		return err
 	}
@@ -95,6 +95,6 @@ func createUserLinux(u User) error {
 }
 
 func removeUserLinux(u User) error {
-	_, err := execCmd(time.Second*10, "userdel", u.UserName)
+	_, err := execCmd(time.Second*10, "userdel", u.Name)
 	return err
 }
