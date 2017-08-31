@@ -26,7 +26,7 @@ const (
 var (
 	ErrActionNotRegistered = errors.New("action not registered with task")
 
-	Names = map[Enum]string{
+	names = map[Enum]string{
 		Add:     "add",
 		Create:  "create",
 		Disable: "disable",
@@ -53,7 +53,7 @@ type Methods map[Enum]methodFunc
 type methodFunc func() (bool, error)
 
 func (a Enum) name() (string, bool) {
-	x, found := Names[a]
+	x, found := names[a]
 	return x, found
 }
 
