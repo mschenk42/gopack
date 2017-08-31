@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/mschenk42/gopack"
+	"github.com/mschenk42/gopack/action"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,7 @@ func TestCreateDirectory(t *testing.T) {
 	Directory{
 		Path: testDir,
 		Mode: 0755,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 	defer os.Remove(testDir)
 
 	_, err := os.Stat(testDir)
@@ -46,7 +47,7 @@ func TestCreateExistingDirectory(t *testing.T) {
 	Directory{
 		Path: testDir,
 		Mode: 0755,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 
 	_, err = os.Stat(testDir)
 	assert.Nil(err)
@@ -62,7 +63,7 @@ func TestCreateDirectoryValidOwner(t *testing.T) {
 	// 	Group: "admin",
 	// 	Path:  testDir,
 	// 	Mode:  0755,
-	// }.Run(gopack.CreateAction)
+	// }.Run(action.CreateAction)
 	// defer os.Remove(testDir)
 
 	// _, err := os.Stat(testDir)
@@ -85,7 +86,7 @@ func TestRemoveDirectory(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-	}.Run(gopack.RemoveAction)
+	}.Run(action.Remove)
 
 	_, err = os.Stat(testDir)
 	assert.NotNil(err)
@@ -106,7 +107,7 @@ func TestRemoveMissingDirectory(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-	}.Run(gopack.RemoveAction)
+	}.Run(action.Remove)
 
 	_, err = os.Stat(testDir)
 	assert.NotNil(err)

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mschenk42/gopack"
+	"github.com/mschenk42/gopack/action"
 )
 
 type Group struct {
@@ -16,15 +17,15 @@ type Group struct {
 	gopack.BaseTask
 }
 
-func (g Group) Run(runActions ...gopack.Action) bool {
+func (g Group) Run(runActions ...action.Enum) bool {
 	g.setDefaults()
 	return g.RunActions(&g, g.registerActions(), runActions)
 }
 
-func (g Group) registerActions() gopack.ActionMethods {
-	return gopack.ActionMethods{
-		gopack.CreateAction: g.create,
-		gopack.RemoveAction: g.remove,
+func (g Group) registerActions() action.Methods {
+	return action.Methods{
+		action.Create: g.create,
+		action.Remove: g.remove,
 	}
 }
 
@@ -40,21 +41,21 @@ func (g Group) create() (bool, error) {
 		return false, nil
 	} else {
 		if !strings.Contains(err.Error(), "unknown group") {
-			return false, g.TaskError(g, gopack.CreateAction, err)
+			return false, g.TaskError(g, action.Create, err)
 		}
 	}
 	if err := createGroupCmd(g); err != nil {
-		return false, g.TaskError(g, gopack.CreateAction, err)
+		return false, g.TaskError(g, action.Create, err)
 	}
 	return true, nil
 }
 
 func (g Group) remove() (bool, error) {
 	if _, err := user.LookupGroup(g.Name); err != nil {
-		return false, g.TaskError(g, gopack.RemoveAction, err)
+		return false, g.TaskError(g, action.Remove, err)
 	}
 	if err := removeGroupCmd(g); err != nil {
-		return false, g.TaskError(g, gopack.RemoveAction, err)
+		return false, g.TaskError(g, action.Remove, err)
 	}
 	return true, nil
 }

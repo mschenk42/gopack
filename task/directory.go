@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/mschenk42/gopack"
+	"github.com/mschenk42/gopack/action"
 )
 
 type Directory struct {
@@ -16,15 +17,15 @@ type Directory struct {
 	gopack.BaseTask
 }
 
-func (d Directory) Run(runActions ...gopack.Action) bool {
+func (d Directory) Run(runActions ...action.Enum) bool {
 	d.setDefaults()
 	return d.RunActions(&d, d.registerActions(), runActions)
 }
 
-func (d Directory) registerActions() gopack.ActionMethods {
-	return gopack.ActionMethods{
-		gopack.CreateAction: d.create,
-		gopack.RemoveAction: d.remove,
+func (d Directory) registerActions() action.Methods {
+	return action.Methods{
+		action.Create: d.create,
+		action.Remove: d.remove,
 	}
 }
 
@@ -49,12 +50,12 @@ func (d Directory) create() (bool, error) {
 	)
 
 	if fi, found, err = fexists(d.Path); err != nil {
-		return false, d.TaskError(d, gopack.CreateAction, err)
+		return false, d.TaskError(d, action.Create, err)
 	}
 	if !found {
 		chgDirectory = true
 		if err = os.MkdirAll(d.Path, d.Mode); err != nil {
-			return false, d.TaskError(d, gopack.CreateAction, err)
+			return false, d.TaskError(d, action.Create, err)
 		}
 	} else {
 		if fi.Mode().Perm() != d.Mode.Perm() {
@@ -67,7 +68,7 @@ func (d Directory) create() (bool, error) {
 		return chgDirectory || chgOwnership || chgMode, nil
 	}
 	if chgOwnership, err = chown(d.Path, d.Owner, d.Group); err != nil {
-		return false, d.TaskError(d, gopack.CreateAction, err)
+		return false, d.TaskError(d, action.Create, err)
 	}
 	return chgDirectory || chgOwnership || chgMode, nil
 }
@@ -78,12 +79,12 @@ func (d Directory) remove() (bool, error) {
 		err   error
 	)
 	if _, found, err = fexists(d.Path); err != nil {
-		return false, d.TaskError(d, gopack.CreateAction, err)
+		return false, d.TaskError(d, action.Create, err)
 	}
 	if !found {
 		return false, nil
 	}
 	//TODO: optionally allow RemoveAll
 	err = os.Remove(d.Path)
-	return true, d.TaskError(d, gopack.RemoveAction, err)
+	return true, d.TaskError(d, action.Remove, err)
 }

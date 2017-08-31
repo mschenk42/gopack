@@ -1,62 +1,14 @@
 package gopack
 
 import (
-	"errors"
 	"fmt"
 	"time"
+
+	"github.com/mschenk42/gopack/action"
 )
 
-const (
-	AddAction Action = iota
-	CreateAction
-	DisableAction
-	EnableAction
-	InstallAction
-	LockAction
-	NilAction
-	NothingAction
-	ReloadAction
-	RemoveAction
-	RestartAction
-	RunAction
-	StartAction
-	StopAction
-	TouchAction
-	UnlockAction
-	UpdateAction
-	UpgradeAction
-)
+var DelayedNotify taskRunSet = taskRunSet{}
 
-var (
-	ErrUnknownAction = errors.New("action unknown")
-
-	ActionNames = map[Action]string{
-		AddAction:     "add",
-		CreateAction:  "create",
-		DisableAction: "disable",
-		EnableAction:  "enable",
-		InstallAction: "install",
-		LockAction:    "lock",
-		NilAction:     "nil",
-		NothingAction: "nothing",
-		ReloadAction:  "reload",
-		RemoveAction:  "remove",
-		RestartAction: "restart",
-		RunAction:     "run",
-		StartAction:   "start",
-		StopAction:    "stop",
-		TouchAction:   "touch",
-		UnlockAction:  "unlock",
-		UpdateAction:  "update",
-		UpgradeAction: "upgrade",
-	}
-
-	DelayedNotify taskRunSet = taskRunSet{}
-)
-
-type Action int
-type ActionMethods map[Action]ActionFunc
-type ActionFunc func() (bool, error)
 type GuardFunc func() (bool, error)
 
 type BaseTask struct {
@@ -67,7 +19,8 @@ type BaseTask struct {
 	notify actionTaskRunSet
 }
 
-type actionTaskRunSet map[Action]map[string]func()
+type actionTaskRunSet map[action.Enum]map[string]func()
+
 type taskRunSet map[string]func()
 
 func (d *taskRunSet) Run() {
@@ -79,7 +32,7 @@ func (d *taskRunSet) Run() {
 }
 
 type Runner interface {
-	Run(actions ...Action) bool
+	Run(actions ...action.Enum) bool
 }
 
 type Task interface {
@@ -87,27 +40,9 @@ type Task interface {
 	fmt.Stringer
 }
 
-func (a Action) name() (string, bool) {
-	s, found := ActionNames[a]
-	return s, found
-}
-
-func (a Action) String() string {
-	s, found := a.name()
-	if !found {
-		s = "UNKNOWN ACTION"
-	}
-	return s
-}
-
-func (r ActionMethods) actionFunc(a Action) (ActionFunc, bool) {
-	f, found := r[a]
-	return f, found
-}
-
-func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []Action) bool {
+func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []action.Enum) bool {
 	if len(runActions) == 0 {
-		b.logRunStatus(false, false, "error", task, NilAction, time.Now())
+		b.logRunStatus(false, false, "error", task, action.Nil, time.Now())
 		b.handleError(fmt.Errorf("unable to run, no action given"))
 		return false
 	}
@@ -121,9 +56,9 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	}
 
 	for _, a := range runActions {
-		f, found := regActions.actionFunc(a)
+		f, found := regActions.Method(a)
 		if !found {
-			b.handleError(b.TaskError(task, a, ErrUnknownAction))
+			b.handleError(b.TaskError(task, a, action.ErrActionNotRegistered))
 			return hasRun
 		}
 		hasRun, err := f()
@@ -135,7 +70,7 @@ func (b BaseTask) RunActions(task Task, regActions ActionMethods, runActions []A
 	return hasRun
 }
 
-func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction Action, delayed bool) {
+func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction action.Enum, delayed bool) {
 	if b.notify == nil {
 		b.notify = actionTaskRunSet{}
 	}
@@ -151,7 +86,7 @@ func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction Action, delayed
 	}
 }
 
-func (b BaseTask) notifyTasks(action Action) {
+func (b BaseTask) notifyTasks(action action.Enum) {
 	funcs, found := b.notify[action]
 	if found {
 		for _, f := range funcs {
@@ -185,7 +120,7 @@ const (
 	TaskLogErrorFormat = "    ! %s"
 )
 
-func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, task Task, action Action, startTime time.Time) {
+func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, task Task, action action.Enum, startTime time.Time) {
 	status := ""
 	switch {
 	case !canRun && reason != "":
@@ -203,7 +138,7 @@ func (b BaseTask) logRunStatus(hasRun, canRun bool, reason string, task Task, ac
 	Log.Printf(TaskLogInfoFormat, task, action, status, time.Since(startTime))
 }
 
-func (b BaseTask) TaskError(task fmt.Stringer, action Action, err error) error {
+func (b BaseTask) TaskError(task fmt.Stringer, action action.Enum, err error) error {
 	if err == nil {
 		return nil
 	}

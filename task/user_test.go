@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/mschenk42/gopack"
+	"github.com/mschenk42/gopack/action"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +32,7 @@ func TestCreateUserLinux(t *testing.T) {
 		x.remove()
 	}()
 
-	assert.NotPanics(func() { x.Run(gopack.CreateAction) })
+	assert.NotPanics(func() { x.Run(action.Create) })
 	assert.Regexp(`.*user test.*create.*(run)`, buf.String())
 	_, err := user.Lookup(x.Name)
 	assert.NoError(err)
@@ -57,8 +58,8 @@ func TestRemoveUserLinux(t *testing.T) {
 		x.remove()
 	}()
 
-	assert.NotPanics(func() { x.Run(gopack.CreateAction) })
-	assert.NotPanics(func() { x.Run(gopack.RemoveAction) })
+	assert.NotPanics(func() { x.Run(action.Create) })
+	assert.NotPanics(func() { x.Run(action.Remove) })
 	assert.Regexp(`.*user test.*remove.*(run)`, buf.String())
 	_, err := user.Lookup(x.Name)
 	assert.NotNil(err)

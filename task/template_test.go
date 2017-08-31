@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/mschenk42/gopack"
+	"github.com/mschenk42/gopack/action"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +21,7 @@ func TestCreateTemplate(t *testing.T) {
 	Directory{
 		Path: testDir,
 		Mode: 0755,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 	defer func() { os.RemoveAll(testDir) }()
 
 	props := &gopack.Properties{"nginx.log_dir": "/var/log/nginx"}
@@ -32,7 +33,7 @@ func TestCreateTemplate(t *testing.T) {
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 
 	b, err := ioutil.ReadFile(fmt.Sprintf("%s/mypack.conf", testDir))
 	assert.NoError(err)
@@ -51,7 +52,7 @@ func TestUpToDateTemplate(t *testing.T) {
 	Directory{
 		Path: testDir,
 		Mode: 0755,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 	defer func() { os.RemoveAll(testDir) }()
 
 	props := &gopack.Properties{"nginx.log_dir": "/var/log/nginx"}
@@ -63,7 +64,7 @@ func TestUpToDateTemplate(t *testing.T) {
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 
 	Template{
 		Name: "mypack",
@@ -72,7 +73,7 @@ func TestUpToDateTemplate(t *testing.T) {
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 
 	re := regexp.MustCompile(`.*template mypack /tmp/.*/mypack.conf.*create.*(up to date).*`)
 	assert.Equal(1, len(re.FindAllSubmatch(buf.Bytes(), -1)))
@@ -91,7 +92,7 @@ func TestChangedTemplate(t *testing.T) {
 	Directory{
 		Path: testDir,
 		Mode: 0755,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 	defer func() { os.RemoveAll(testDir) }()
 
 	props := &gopack.Properties{"nginx.log_dir": "/var/log/nginx"}
@@ -103,7 +104,7 @@ func TestChangedTemplate(t *testing.T) {
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 
 	props = &gopack.Properties{"nginx.log_dir": "/opt/log/nginx"}
 
@@ -114,7 +115,7 @@ func TestChangedTemplate(t *testing.T) {
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 
 	b, err := ioutil.ReadFile(fmt.Sprintf("%s/mypack.conf", testDir))
 	assert.NoError(err)
@@ -137,7 +138,7 @@ func TestModeChangedTemplate(t *testing.T) {
 	Directory{
 		Path: testDir,
 		Mode: 0755,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 	defer func() { os.RemoveAll(testDir) }()
 
 	Template{
@@ -145,7 +146,7 @@ func TestModeChangedTemplate(t *testing.T) {
 		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
 		Mode:   0755,
 		Source: `log_dir:`,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 	assert.Regexp(`.*-rwxr-xr-x:.*`, buf.String())
 
 	Template{
@@ -153,7 +154,7 @@ func TestModeChangedTemplate(t *testing.T) {
 		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
 		Mode:   0775,
 		Source: `log_dir:`,
-	}.Run(gopack.CreateAction)
+	}.Run(action.Create)
 
 	assert.Regexp(`.*-rwxr-xr-x:.*`, buf.String())
 	assert.Regexp(`.*-rwxrwxr-x:.*`, buf.String())
