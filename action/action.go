@@ -53,19 +53,19 @@ type Methods map[Enum]methodFunc
 type methodFunc func() (bool, error)
 
 func (a Enum) name() (string, bool) {
-	s, found := Names[a]
-	return s, found
+	x, found := Names[a]
+	return x, found
 }
 
 func (a Enum) String() string {
-	s, found := a.name()
+	x, found := a.name()
 	if !found {
-		s = "UNKNOWN ACTION"
+		x = "UNKNOWN ACTION"
 	}
-	return s
+	return x
 }
 
 func (m Methods) Method(a Enum) (methodFunc, bool) {
-	f, found := m[a]
-	return f, found
+	x, found := m[a]
+	return x, found
 }
