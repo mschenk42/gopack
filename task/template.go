@@ -14,7 +14,7 @@ import (
 type Template struct {
 	Name   string
 	Source string
-	Props  gopack.Properties
+	Props  *gopack.Properties
 	Path   string
 	Owner  string
 	Group  string

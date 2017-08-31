@@ -9,8 +9,9 @@ func Run(props *gopack.Properties) {
 	pack := gopack.Pack{
 		Name: "MyPack",
 		Props: &gopack.Properties{
-			"nginx.log_dir":   "/var/log/nginx",
-			"nginx.cache_dir": "/var/cache",
+			"mypack.user":   "mypack",
+			"mypack.group":  "mypack",
+			"nginx.log_dir": "/var/log/nginx",
 		},
 		RunFunc: run,
 	}
@@ -19,25 +20,25 @@ func Run(props *gopack.Properties) {
 
 func run(pack *gopack.Pack) {
 
+	owner, _ := (*pack.Props).Str("mypack.user")
+	group, _ := (*pack.Props).Str("mypack.group")
+
 	task.Group{Name: "mypack"}.Run(gopack.CreateAction)
 	task.User{Name: "mypack", Group: "mypack"}.Run(gopack.CreateAction)
 
 	task.Directory{
 		Path:  "/tmp/test",
-		Owner: "mypack",
-		Group: "mypack",
+		Owner: owner,
+		Group: group,
 		Mode:  0755,
 	}.Run(gopack.CreateAction)
-
-	data := *pack.Props
-	data["mykey"] = "key"
 
 	task.Template{
 		Name:   "mypack",
 		Path:   "/tmp/test/mypack.conf",
-		Owner:  "mypack",
+		Owner:  owner,
 		Mode:   0755,
 		Source: `log_dir:{{ index . "nginx.log_dir"}}`,
-		Props:  data,
+		Props:  pack.Props,
 	}.Run(gopack.CreateAction)
 }

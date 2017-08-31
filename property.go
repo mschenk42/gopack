@@ -32,7 +32,7 @@ func (p *Properties) Merge(props *Properties) {
 	}
 }
 
-func (p *Properties) StringVar(key string) (string, bool) {
+func (p *Properties) Str(key string) (string, bool) {
 	v, found := (*p)[key]
 	if found && v != nil {
 		return v.(string), found
@@ -40,7 +40,7 @@ func (p *Properties) StringVar(key string) (string, bool) {
 	return "", found
 }
 
-func (p *Properties) FloatVar(key string) (float64, bool) {
+func (p *Properties) Float(key string) (float64, bool) {
 	v, found := (*p)[key]
 	if found && v != nil {
 		return v.(float64), found
@@ -48,7 +48,7 @@ func (p *Properties) FloatVar(key string) (float64, bool) {
 	return 0, found
 }
 
-func (p *Properties) IntVar(key string) (int, bool) {
+func (p *Properties) Int(key string) (int, bool) {
 	v, found := (*p)[key]
 	if found && v != nil {
 		return int(v.(float64)), found
@@ -56,7 +56,7 @@ func (p *Properties) IntVar(key string) (int, bool) {
 	return 0, found
 }
 
-func (p *Properties) MapVar(key string) (map[string]interface{}, bool) {
+func (p *Properties) Map(key string) (map[string]interface{}, bool) {
 	v, found := (*p)[key]
 	if found && v != nil {
 		return v.(map[string]interface{}), found
@@ -64,7 +64,7 @@ func (p *Properties) MapVar(key string) (map[string]interface{}, bool) {
 	return map[string]interface{}{}, found
 }
 
-func (p *Properties) SliceVar(key string) ([]interface{}, bool) {
+func (p *Properties) Slice(key string) ([]interface{}, bool) {
 	v, found := (*p)[key]
 	if found && v != nil {
 		return v.([]interface{}), found
@@ -72,7 +72,7 @@ func (p *Properties) SliceVar(key string) ([]interface{}, bool) {
 	return []interface{}{}, found
 }
 
-func (p *Properties) BoolVar(key string) (bool, bool) {
+func (p *Properties) Bool(key string) (bool, bool) {
 	v, found := (*p)[key]
 	if found && v != nil {
 		return v.(bool), found

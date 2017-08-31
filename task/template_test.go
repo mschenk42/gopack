@@ -23,8 +23,7 @@ func TestCreateTemplate(t *testing.T) {
 	}.Run(gopack.CreateAction)
 	defer func() { os.RemoveAll(testDir) }()
 
-	data := gopack.Properties{}
-	data["nginx.log_dir"] = "/var/log/nginx"
+	props := &gopack.Properties{"nginx.log_dir": "/var/log/nginx"}
 
 	Template{
 		Name: "mypack",
@@ -32,7 +31,7 @@ func TestCreateTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Props:  data,
+		Props:  props,
 	}.Run(gopack.CreateAction)
 
 	b, err := ioutil.ReadFile(fmt.Sprintf("%s/mypack.conf", testDir))
@@ -55,8 +54,7 @@ func TestUpToDateTemplate(t *testing.T) {
 	}.Run(gopack.CreateAction)
 	defer func() { os.RemoveAll(testDir) }()
 
-	data := gopack.Properties{}
-	data["nginx.log_dir"] = "/var/log/nginx"
+	props := &gopack.Properties{"nginx.log_dir": "/var/log/nginx"}
 
 	Template{
 		Name: "mypack",
@@ -64,7 +62,7 @@ func TestUpToDateTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Props:  data,
+		Props:  props,
 	}.Run(gopack.CreateAction)
 
 	Template{
@@ -73,7 +71,7 @@ func TestUpToDateTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Props:  data,
+		Props:  props,
 	}.Run(gopack.CreateAction)
 
 	re := regexp.MustCompile(`.*template mypack /tmp/.*/mypack.conf.*create.*(up to date).*`)
@@ -96,8 +94,7 @@ func TestChangedTemplate(t *testing.T) {
 	}.Run(gopack.CreateAction)
 	defer func() { os.RemoveAll(testDir) }()
 
-	data := gopack.Properties{}
-	data["nginx.log_dir"] = "/var/log/nginx"
+	props := &gopack.Properties{"nginx.log_dir": "/var/log/nginx"}
 
 	Template{
 		Name: "mypack",
@@ -105,10 +102,10 @@ func TestChangedTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Props:  data,
+		Props:  props,
 	}.Run(gopack.CreateAction)
 
-	data["nginx.log_dir"] = "/opt/log/nginx"
+	props = &gopack.Properties{"nginx.log_dir": "/opt/log/nginx"}
 
 	Template{
 		Name: "mypack",
@@ -116,7 +113,7 @@ func TestChangedTemplate(t *testing.T) {
 		Mode: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
-		Props:  data,
+		Props:  props,
 	}.Run(gopack.CreateAction)
 
 	b, err := ioutil.ReadFile(fmt.Sprintf("%s/mypack.conf", testDir))

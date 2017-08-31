@@ -39,7 +39,7 @@ func TestStringType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.StringVar("string")
+	v, f := p.Str("string")
 	assert.Equal(true, f)
 	assert.Equal("val", v)
 }
@@ -50,7 +50,7 @@ func TestFloat64Type(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.FloatVar("float")
+	v, f := p.Float("float")
 	assert.Equal(true, f)
 	assert.Equal(0.1, v)
 }
@@ -61,7 +61,7 @@ func TestIntType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.IntVar("int")
+	v, f := p.Int("int")
 	assert.Equal(true, f)
 	assert.Equal(1, v)
 }
@@ -72,7 +72,7 @@ func TestMapType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.MapVar("map")
+	v, f := p.Map("map")
 	assert.Equal(true, f)
 	assert.Equal(map[string]interface{}{"key1": "val1", "key2": "val2"}, v)
 }
@@ -83,7 +83,7 @@ func TestSliceType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.SliceVar("array")
+	v, f := p.Slice("array")
 	assert.Equal(true, f)
 	assert.Equal([]interface{}{"val1", "val2"}, v)
 }
@@ -94,7 +94,7 @@ func TestBoolType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.BoolVar("bool")
+	v, f := p.Bool("bool")
 	assert.Equal(true, f)
 	assert.Equal(true, v)
 }
@@ -105,7 +105,7 @@ func TestNilType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.MapVar("nil")
+	v, f := p.Map("nil")
 	assert.Equal(true, f)
 	assert.Equal(map[string]interface{}{}, v)
 }

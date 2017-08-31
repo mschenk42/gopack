@@ -15,10 +15,10 @@ const (
 	LockAction
 	NilAction
 	NothingAction
-	RemoveAction
-	RunAction
 	ReloadAction
+	RemoveAction
 	RestartAction
+	RunAction
 	StartAction
 	StopAction
 	TouchAction
@@ -40,11 +40,11 @@ var (
 		NilAction:     "nil",
 		NothingAction: "nothing",
 		ReloadAction:  "reload",
-		RestartAction: "restart",
 		RemoveAction:  "remove",
+		RestartAction: "restart",
+		RunAction:     "run",
 		StartAction:   "start",
 		StopAction:    "stop",
-		RunAction:     "run",
 		TouchAction:   "touch",
 		UnlockAction:  "unlock",
 		UpdateAction:  "update",
