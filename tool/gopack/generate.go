@@ -61,6 +61,7 @@ import (
 	"github.com/mschenk42/gopack/action"
 )
 
+// {{$receiver}} ...
 type {{$receiver}} struct {
 	Prop1 string
 	Prop2 string
@@ -68,6 +69,7 @@ type {{$receiver}} struct {
 	gopack.BaseTask
 }
 
+// Run initializes default property values and delegates to BaseTask RunActions method
 func ({{$arg}} {{$receiver}}) Run(runActions ...action.Enum) bool {
 	{{$arg}}.setDefaults()
 	return {{$arg}}.RunActions(&{{$arg}}, {{$arg}}.registerActions(), runActions)
@@ -85,6 +87,7 @@ func ({{$arg}} {{$receiver}}) setDefaults() {
 	}
 }
 
+// String returns a string which identifies the task with it's property values
 func ({{$arg}} {{$receiver}}) String() string {
 	return fmt.Sprintf("{{$receiver|ToLower}} %s %s", {{$arg}}.Prop1, {{$arg}}.Prop2)
 }
