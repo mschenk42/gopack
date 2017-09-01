@@ -7,33 +7,50 @@ import (
 	"strings"
 )
 
+var (
+	yesFlag = flag.Bool("y", false, "run pack without confirmation")
+)
+
+const (
+	defaultProperties = "gopack.json"
+)
+
 func LoadProperties() *Properties {
-	yesFlag := flag.Bool("y", false, "run pack without confirmation")
 	flag.Parse()
 
 	confirm := *yesFlag
 	if !confirm {
 		response := ""
-		fmt.Print("Run pack? ")
+		fmt.Print("Run pack (y/n)? ")
 		fmt.Scanln(&response)
 		confirm = strings.TrimSpace(strings.ToLower(response)) == "y"
 	}
 
 	if confirm {
-		p := new(Properties)
+		p := Properties{}
 
-		cfgFile := flag.Arg(0)
-		if cfgFile == "" {
-			cfgFile = "gopack.json"
+		args := flag.Args()
+		if len(args) == 0 {
+			if _, err := os.Stat(defaultProperties); err == nil {
+				args = append(args, defaultProperties)
+			}
 		}
 
-		fmt.Printf("loading %s configuration file\n\n", cfgFile)
-		if err := p.Load(cfgFile); err != nil {
-			fmt.Fprintf(os.Stderr, "unable to load property file %s, %s\n", cfgFile, err)
-			os.Exit(1)
-			return nil
+		for idx, f := range args {
+			fmt.Printf("loading %s configuration file\n", f)
+			p2 := Properties{}
+			if err := p2.Load(f); err != nil {
+				fmt.Fprintf(os.Stderr, "unable to load property file %s, %s\n", f, err)
+				os.Exit(1)
+				return nil
+			}
+			if idx > 0 {
+				p.Merge(&p2)
+			} else {
+				p = p2
+			}
 		}
-		return p
+		return &p
 	}
 
 	os.Exit(0)
