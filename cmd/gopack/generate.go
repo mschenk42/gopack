@@ -20,8 +20,8 @@ usage: gopack generate --type=[runpack|pack|task] --name=<string> path
 
 var (
 	generateCommand = flag.NewFlagSet("generate", flag.ExitOnError)
-	typeToGenerate  = generateCommand.String("type", "task", "task, pack or runpack (defaults to path's base dir or file name)")
-	typeName        = generateCommand.String("name", "", "name of generated task, pack or runpack")
+	typeToGenerate  = generateCommand.String("type", "task", "task, pack or runpack")
+	typeName        = generateCommand.String("name", "", "name of generated task, pack or runpack (defaults to path's base dir or file name)")
 )
 
 func main() {
