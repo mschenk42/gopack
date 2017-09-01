@@ -26,9 +26,7 @@ var (
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Fprint(os.Stderr, usage)
-		generateCommand.PrintDefaults()
-		os.Exit(1)
+		exitOnError(nil)
 	}
 
 	switch os.Args[1] {
@@ -37,36 +35,32 @@ func main() {
 		switch *typeToGenerate {
 		case "task":
 			if err := generateTask(*typeName, generateCommand.Arg(0), false); err != nil {
-				fmt.Fprint(os.Stderr, usage)
-				generateCommand.PrintDefaults()
-				fmt.Fprint(os.Stderr, err)
-				os.Exit(1)
+				exitOnError(err)
 			}
 		case "pack":
 			if err := generatePack(*typeName, generateCommand.Arg(0), false); err != nil {
-				fmt.Fprint(os.Stderr, usage)
-				generateCommand.PrintDefaults()
-				fmt.Fprint(os.Stderr, err)
-				os.Exit(1)
+				exitOnError(err)
 			}
 
 		case "runpack":
 			if err := generateRunPack(*typeName, generateCommand.Arg(0), false); err != nil {
-				fmt.Fprint(os.Stderr, usage)
-				generateCommand.PrintDefaults()
-				fmt.Fprint(os.Stderr, err)
-				os.Exit(1)
+				exitOnError(err)
 			}
 		default:
-			fmt.Fprint(os.Stderr, usage)
-			generateCommand.PrintDefaults()
-			os.Exit(1)
+			exitOnError(nil)
 		}
 	default:
-		fmt.Fprint(os.Stderr, usage)
-		generateCommand.PrintDefaults()
-		os.Exit(1)
+		exitOnError(nil)
 	}
+}
+
+func exitOnError(err error) {
+	fmt.Fprint(os.Stderr, usage)
+	generateCommand.PrintDefaults()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+	}
+	os.Exit(1)
 }
 
 func generateRunPack(name, path string, force bool) error {
