@@ -127,7 +127,7 @@ func generateTask(name, path string) error {
 		}); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(p, b.Bytes(), 0755); err != nil {
+	if err := ioutil.WriteFile(p, b.Bytes(), 0644); err != nil {
 		return err
 	}
 	fmt.Fprintf(os.Stdout, "Task %s generated", p)
