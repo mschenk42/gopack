@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func ParseCLI() *Properties {
+func LoadProperties() *Properties {
 	yesFlag := flag.Bool("y", false, "run pack without confirmation")
 	flag.Parse()
 
