@@ -1,8 +1,10 @@
 package task
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/user"
@@ -104,4 +106,40 @@ func execCmd(timeout time.Duration, command string, args ...string) ([]byte, err
 	}
 
 	return b, nil
+}
+
+func execCmdStream(w io.Writer, timeout time.Duration, command string, args ...string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, command, args...)
+
+	stdoutReader, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	stdoutScanner := bufio.NewScanner(stdoutReader)
+	go func() {
+		for stdoutScanner.Scan() {
+			fmt.Fprint(w, stdoutScanner.Text())
+		}
+	}()
+	stderrReader, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+	stderrScanner := bufio.NewScanner(stderrReader)
+	go func() {
+		for stderrScanner.Scan() {
+			fmt.Fprint(w, stderrScanner.Text())
+		}
+	}()
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	if err := cmd.Wait(); err != nil {
+		return err
+	}
+	return nil
 }

@@ -58,19 +58,19 @@ func (t Template) create() (bool, error) {
 
 	x := template.New(t.Name)
 	if x, err = x.Parse(t.Source); err != nil {
-		return false, t.TaskError(t, action.Create, err)
+		return false, gopack.NewTaskError(t, action.Create, err)
 	}
 	bt := &bytes.Buffer{}
 	if err = x.Execute(bt, t.Props); err != nil {
-		return false, t.TaskError(t, action.Create, err)
+		return false, gopack.NewTaskError(t, action.Create, err)
 	}
 	if fi, fileExists, err = fexists(t.Path); err != nil {
-		return false, t.TaskError(t, action.Create, err)
+		return false, gopack.NewTaskError(t, action.Create, err)
 	}
 	if fileExists {
 		bf := []byte{}
 		if bf, err = ioutil.ReadFile(t.Path); err != nil {
-			return false, t.TaskError(t, action.Create, err)
+			return false, gopack.NewTaskError(t, action.Create, err)
 		}
 		sumt := sha256.Sum256(bt.Bytes())
 		sumf := sha256.Sum256(bf)
@@ -78,7 +78,7 @@ func (t Template) create() (bool, error) {
 	}
 	if !fileExists || checkSumDiff {
 		if err = ioutil.WriteFile(t.Path, bt.Bytes(), t.Mode); err != nil {
-			return false, t.TaskError(t, action.Create, err)
+			return false, gopack.NewTaskError(t, action.Create, err)
 		}
 		chgTemplate = true
 	} else {
@@ -93,7 +93,7 @@ func (t Template) create() (bool, error) {
 		return chgTemplate || chgOwnership || chgMode, nil
 	}
 	if chgOwnership, err = chown(t.Path, t.Owner, t.Group); err != nil {
-		return chgTemplate || chgOwnership || chgMode, t.TaskError(t, action.Create, err)
+		return chgTemplate || chgOwnership || chgMode, gopack.NewTaskError(t, action.Create, err)
 	} else {
 		return chgTemplate || chgOwnership || chgMode, nil
 	}
