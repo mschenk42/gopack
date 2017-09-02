@@ -307,7 +307,7 @@ func ({{$arg}} {{$receiver}}) registerActions() action.Methods {
 	}
 }
 
-func ({{$arg}} {{$receiver}}) setDefaults() {
+func ({{$arg}} *{{$receiver}}) setDefaults() {
 	if {{$arg}}.Prop1 == "" {
 		{{$arg}}.Prop1 = "default value"
 	}
