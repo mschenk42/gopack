@@ -24,7 +24,7 @@ type Template struct {
 	gopack.BaseTask
 }
 
-func (t Template) Run(runActions ...action.Enum) bool {
+func (t Template) Run(runActions ...action.Enum) gopack.ActionRunStatus {
 	t.setDefaults()
 	return t.RunActions(&t, t.registerActions(), runActions)
 }

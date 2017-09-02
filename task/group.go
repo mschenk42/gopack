@@ -17,7 +17,7 @@ type Group struct {
 	gopack.BaseTask
 }
 
-func (g Group) Run(runActions ...action.Enum) bool {
+func (g Group) Run(runActions ...action.Enum) gopack.ActionRunStatus {
 	g.setDefaults()
 	return g.RunActions(&g, g.registerActions(), runActions)
 }

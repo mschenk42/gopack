@@ -1,7 +1,5 @@
 package action
 
-import "errors"
-
 const (
 	Add Enum = iota
 	Create
@@ -24,8 +22,6 @@ const (
 )
 
 var (
-	ErrActionNotRegistered = errors.New("action not registered with task")
-
 	names = map[Enum]string{
 		Add:     "add",
 		Create:  "create",
@@ -68,4 +64,9 @@ func (a Enum) String() string {
 func (m Methods) Method(a Enum) (methodFunc, bool) {
 	x, found := m[a]
 	return x, found
+}
+
+// NewSlice is a helper method for creating action slices
+func NewSlice(a ...Enum) []Enum {
+	return a
 }

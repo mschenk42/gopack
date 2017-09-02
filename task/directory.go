@@ -17,7 +17,7 @@ type Directory struct {
 	gopack.BaseTask
 }
 
-func (d Directory) Run(runActions ...action.Enum) bool {
+func (d Directory) Run(runActions ...action.Enum) gopack.ActionRunStatus {
 	d.setDefaults()
 	return d.RunActions(&d, d.registerActions(), runActions)
 }

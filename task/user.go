@@ -19,7 +19,7 @@ type User struct {
 	gopack.BaseTask
 }
 
-func (u User) Run(runActions ...action.Enum) bool {
+func (u User) Run(runActions ...action.Enum) gopack.ActionRunStatus {
 	u.setDefaults()
 	return u.RunActions(&u, u.registerActions(), runActions)
 }

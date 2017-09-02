@@ -206,7 +206,7 @@ type Task1 struct {
 	BaseTask
 }
 
-func (t Task1) Run(runActions ...action.Enum) bool {
+func (t Task1) Run(runActions ...action.Enum) ActionRunStatus {
 	regActions := action.Methods{
 		action.Create: t.create,
 	}
@@ -227,7 +227,7 @@ type Task2 struct {
 	BaseTask
 }
 
-func (t Task2) Run(runActions ...action.Enum) bool {
+func (t Task2) Run(runActions ...action.Enum) ActionRunStatus {
 	regActions := action.Methods{
 		action.Nothing: t.nothing,
 		action.Create:  t.create,
