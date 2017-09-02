@@ -48,8 +48,12 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 		return false
 	}
 
+	var (
+		hasRun bool
+		err    error
+	)
+
 	t := time.Now()
-	hasRun := false
 	canRun, reason := b.canRun()
 	if !canRun {
 		LogTaskStatus(false, hasRun, canRun, reason, task, runActions[0], t)
@@ -62,7 +66,7 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 			handleTaskError(NewTaskError(task, a, action.ErrActionNotRegistered), b.ContOnError)
 			return hasRun
 		}
-		hasRun, err := f()
+		hasRun, err = f()
 		handleTaskError(err, b.ContOnError)
 		LogTaskStatus(false, hasRun, canRun, reason, task, a, t)
 		b.notifyTasks(a)
