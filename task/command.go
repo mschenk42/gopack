@@ -32,7 +32,7 @@ func (c Command) registerActions() action.Methods {
 
 func (c *Command) setDefaults() {
 	if c.Timeout == 0 {
-		c.Timeout = 10 * time.Second
+		c.Timeout = 1 * time.Hour
 	}
 }
 
