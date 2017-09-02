@@ -2,8 +2,8 @@ package gopack
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
-	"os"
 )
 
 type Properties map[string]interface{}
@@ -80,20 +80,21 @@ func (p *Properties) Bool(key string) (bool, bool) {
 	return false, found
 }
 
-func (p *Properties) Load(filename string) error {
-	b, err := ioutil.ReadFile(filename)
+func (p *Properties) Load(r io.Reader) error {
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
 	return p.unmarshalJSON(b)
 }
 
-func (p *Properties) Save(filename string, x os.FileMode) error {
+func (p *Properties) Save(w io.Writer) error {
 	b, err := p.marshalJSON()
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filename, b, x)
+	_, err = w.Write(b)
+	return err
 }
 
 func (p *Properties) unmarshalJSON(b []byte) error {
