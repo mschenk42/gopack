@@ -296,7 +296,7 @@ type {{$receiver}} struct {
 }
 
 // Run initializes default property values and delegates to BaseTask RunActions method
-func ({{$arg}} {{$receiver}}) Run(runActions ...action.Enum) gopack.ActionRunStatus  {
+func ({{$arg}} {{$receiver}}) Run(runActions ...action.Enum) gopack.ActionRunStatus {
 	{{$arg}}.setDefaults()
 	return {{$arg}}.RunActions(&{{$arg}}, {{$arg}}.registerActions(), runActions)
 }

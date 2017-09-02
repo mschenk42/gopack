@@ -129,9 +129,9 @@ func (b BaseTask) canRun() (bool, string) {
 }
 
 const (
-	LogHeaderFormat = "  * %s: %s (%s) %s"
-	LogErrorFormat  = "    ! %s"
-	LogInfoFormat   = "    %s"
+	logHeaderFormat = "  * %s: %s (%s) %s"
+	logErrorFormat  = "    ! %s"
+	logInfoFormat   = "    %s"
 )
 
 func NewTaskInfoWriter() io.Writer {
@@ -142,7 +142,7 @@ type taskInfoWriter struct {
 }
 
 func (t taskInfoWriter) Write(b []byte) (int, error) {
-	Log.Printf(LogInfoFormat, b)
+	Log.Printf(logInfoFormat, b)
 	return len(b), nil
 }
 
@@ -177,14 +177,14 @@ func (t TaskStatus) Log() {
 		actions = append(actions, a.String())
 
 	}
-	Log.Printf(LogHeaderFormat, t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt))
+	Log.Printf(logHeaderFormat, t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt))
 }
 
 func NewTaskError(task fmt.Stringer, action action.Enum, err error) error {
 	if err == nil {
 		return nil
 	}
-	Log.Printf(LogHeaderFormat, task, action, "error", time.Since(time.Now()))
+	Log.Printf(logHeaderFormat, task, action, "error", time.Since(time.Now()))
 	return err
 }
 
@@ -193,8 +193,8 @@ func handleTaskError(err error, contOnError bool) {
 		return
 	}
 	if contOnError {
-		Log.Printf(LogErrorFormat, err)
+		Log.Printf(logErrorFormat, err)
 	} else {
-		Log.Fatalf(LogErrorFormat, err)
+		Log.Fatalf(logErrorFormat, err)
 	}
 }
