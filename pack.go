@@ -31,8 +31,8 @@ type Pack struct {
 
 const (
 	PackHeaderFormat  = "\nPack: %s (%s) %s\n"
-	PackSectionFormat = "\n  [%s]\n"
-	PackErrorFormat   = "  ! %s\n"
+	PackSectionFormat = "\n[%s %s]\n"
+	PackErrorFormat   = "! %s\n"
 )
 
 func (p Pack) String() string {
@@ -47,11 +47,12 @@ func (p *Pack) Run(props *Properties) {
 	p.Props.Merge(props)
 	Log.Printf(PackHeaderFormat, p, "start", "")
 	Log.Printf("%s", p.Props.Redact(p.Redact))
-	Log.Printf(PackSectionFormat, "run")
+	Log.Printf(PackSectionFormat, "run tasks for", p)
 	p.RunFunc(p)
 	if !p.NoRunDelayed {
-		Log.Printf(PackSectionFormat, "delayed run")
+		Log.Printf(PackSectionFormat, "run delayed tasks for", p)
 		DelayedNotify.Run()
 	}
 	Log.Printf(PackHeaderFormat, p, "end", time.Since(t))
+	Log.Print("")
 }

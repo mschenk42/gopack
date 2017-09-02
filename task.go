@@ -75,7 +75,9 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 			continue
 		}
 		hasRun, err := f()
-		TaskStatus{Task: task, Actions: action.NewSlice(a), HasRun: hasRun, CanRun: true, Reason: reason, StartedAt: t}.Log()
+		if err == nil {
+			TaskStatus{Task: task, Actions: action.NewSlice(a), HasRun: hasRun, CanRun: true, Reason: reason, StartedAt: t}.Log()
+		}
 		handleTaskError(err, b.ContOnError)
 		b.notifyTasks(a)
 		runStatus[a] = hasRun
@@ -129,10 +131,12 @@ func (b BaseTask) canRun() (bool, string) {
 }
 
 const (
-	logHeaderFormat = "  * %s: %s (%s) %s"
-	logErrorFormat  = "    ! %s"
-	logInfoFormat   = "    %s"
+	logHeaderFormat = "* %s: %s (%s) %s"
+	logErrorFormat  = "! %s"
+	logInfoFormat   = "%s"
 )
+
+var colorize = ColorFormat{}
 
 func NewTaskInfoWriter() io.Writer {
 	return taskInfoWriter{}
@@ -177,14 +181,18 @@ func (t TaskStatus) Log() {
 		actions = append(actions, a.String())
 
 	}
-	Log.Printf(logHeaderFormat, t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt))
+	colorFunc := colorize.Green
+	if t.Reason == "error" {
+		colorFunc = colorize.Red
+	}
+	Log.Printf(colorFunc(logHeaderFormat), t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt))
 }
 
 func NewTaskError(task fmt.Stringer, action action.Enum, err error) error {
 	if err == nil {
 		return nil
 	}
-	Log.Printf(logHeaderFormat, task, action, "error", time.Since(time.Now()))
+	Log.Printf(colorize.Red(logHeaderFormat), task, action, "error", time.Since(time.Now()))
 	return err
 }
 
@@ -193,8 +201,8 @@ func handleTaskError(err error, contOnError bool) {
 		return
 	}
 	if contOnError {
-		Log.Printf(logErrorFormat, err)
+		Log.Printf(colorize.Red(logErrorFormat), err)
 	} else {
-		Log.Fatalf(logErrorFormat, err)
+		Log.Fatalf(colorize.Red(logErrorFormat), err)
 	}
 }
