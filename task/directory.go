@@ -49,7 +49,7 @@ func (d Directory) create() (bool, error) {
 		fi           os.FileInfo
 	)
 
-	if fi, found, err = fexists(d.Path); err != nil {
+	if fi, found, err = Fexists(d.Path); err != nil {
 		return false, gopack.NewTaskError(d, action.Create, err)
 	}
 	if !found {
@@ -78,7 +78,7 @@ func (d Directory) remove() (bool, error) {
 		found bool
 		err   error
 	)
-	if _, found, err = fexists(d.Path); err != nil {
+	if _, found, err = Fexists(d.Path); err != nil {
 		return false, gopack.NewTaskError(d, action.Create, err)
 	}
 	if !found {

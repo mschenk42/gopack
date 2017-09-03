@@ -29,11 +29,14 @@ type actionTaskRunSet map[action.Enum]map[string]func()
 type taskRunSet map[string]func()
 
 func (d *taskRunSet) Run() {
-	for _, f := range *d {
-		f()
+	// running task funcs can result in new map entries
+	for len(*d) > 0 {
+		for k, f := range *d {
+			f()
+			// per Go spec it's safe to delete while ranging over
+			delete(*d, k)
+		}
 	}
-	//clear the list
-	d = &taskRunSet{}
 }
 
 type Runner interface {
@@ -85,7 +88,7 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 	return runStatus
 }
 
-func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction action.Enum, delayed bool) {
+func (b *BaseTask) SetNotify(notify Task, forAction, whenAction action.Enum, delayed bool) {
 	if b.notify == nil {
 		b.notify = actionTaskRunSet{}
 	}
@@ -93,7 +96,9 @@ func (b *BaseTask) NotifyWhen(notify Task, forAction, whenAction action.Enum, de
 		b.notify[whenAction] = map[string]func(){}
 	}
 	if delayed {
-		DelayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(forAction) }
+		b.notify[whenAction][fmt.Sprintf("%s:%s", notify, forAction)] = func() {
+			DelayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(forAction) }
+		}
 	} else {
 		b.notify[whenAction][fmt.Sprintf("%s:%s", notify, forAction)] = func() {
 			notify.Run(forAction)

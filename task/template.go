@@ -64,7 +64,7 @@ func (t Template) create() (bool, error) {
 	if err = x.Execute(bt, t.Props); err != nil {
 		return false, gopack.NewTaskError(t, action.Create, err)
 	}
-	if fi, fileExists, err = fexists(t.Path); err != nil {
+	if fi, fileExists, err = Fexists(t.Path); err != nil {
 		return false, gopack.NewTaskError(t, action.Create, err)
 	}
 	if fileExists {

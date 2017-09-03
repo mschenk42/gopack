@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func fexists(path string) (os.FileInfo, bool, error) {
+func Fexists(path string) (os.FileInfo, bool, error) {
 	var (
 		err error
 		fi  os.FileInfo

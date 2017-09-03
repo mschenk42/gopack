@@ -52,7 +52,9 @@ func (c Command) run() (bool, error) {
 		if err != nil {
 			return false, gopack.NewTaskError(c, action.Run, err)
 		}
-		gopack.NewTaskInfoWriter().Write(b)
+		if string(b) != "" {
+			gopack.NewTaskInfoWriter().Write(b)
+		}
 	}
 	return true, nil
 }
