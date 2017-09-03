@@ -80,6 +80,8 @@ func LoadProperties() (*Properties, []string) {
 			}
 		}
 		return &p, actions
+	} else {
+		os.Exit(0)
 	}
 	return nil, actions
 }
