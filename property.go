@@ -32,52 +32,57 @@ func (p *Properties) Merge(props *Properties) {
 	}
 }
 
-func (p *Properties) Str(key string) (string, bool) {
-	v, found := (*p)[key]
-	if found && v != nil {
-		return v.(string), found
-	}
-	return "", found
+func (p *Properties) Exists(key string) bool {
+	_, x := (*p)[key]
+	return x
 }
 
-func (p *Properties) Float(key string) (float64, bool) {
+func (p *Properties) Str(key string) string {
 	v, found := (*p)[key]
 	if found && v != nil {
-		return v.(float64), found
+		return v.(string)
 	}
-	return 0, found
+	return ""
 }
 
-func (p *Properties) Int(key string) (int, bool) {
+func (p *Properties) Float(key string) float64 {
 	v, found := (*p)[key]
 	if found && v != nil {
-		return int(v.(float64)), found
+		return v.(float64)
 	}
-	return 0, found
+	return 0
 }
 
-func (p *Properties) Map(key string) (map[string]interface{}, bool) {
+func (p *Properties) Int(key string) int {
 	v, found := (*p)[key]
 	if found && v != nil {
-		return v.(map[string]interface{}), found
+		return int(v.(float64))
 	}
-	return map[string]interface{}{}, found
+	return 0
 }
 
-func (p *Properties) Slice(key string) ([]interface{}, bool) {
+func (p *Properties) Map(key string) map[string]interface{} {
 	v, found := (*p)[key]
 	if found && v != nil {
-		return v.([]interface{}), found
+		return v.(map[string]interface{})
 	}
-	return []interface{}{}, found
+	return map[string]interface{}{}
 }
 
-func (p *Properties) Bool(key string) (bool, bool) {
+func (p *Properties) Slice(key string) []interface{} {
 	v, found := (*p)[key]
 	if found && v != nil {
-		return v.(bool), found
+		return v.([]interface{})
 	}
-	return false, found
+	return []interface{}{}
+}
+
+func (p *Properties) Bool(key string) bool {
+	v, found := (*p)[key]
+	if found && v != nil {
+		return v.(bool)
+	}
+	return false
 }
 
 func (p *Properties) Load(r io.Reader) error {

@@ -39,9 +39,8 @@ func TestStringType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.Str("string")
-	assert.Equal(true, f)
-	assert.Equal("val", v)
+	assert.Equal(true, p.Exists("string"))
+	assert.Equal("val", p.Str("string"))
 }
 
 func TestFloat64Type(t *testing.T) {
@@ -50,9 +49,8 @@ func TestFloat64Type(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.Float("float")
-	assert.Equal(true, f)
-	assert.Equal(0.1, v)
+	assert.Equal(true, p.Exists("float"))
+	assert.Equal(0.1, p.Float("float"))
 }
 
 func TestIntType(t *testing.T) {
@@ -61,9 +59,8 @@ func TestIntType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.Int("int")
-	assert.Equal(true, f)
-	assert.Equal(1, v)
+	assert.Equal(true, p.Exists("int"))
+	assert.Equal(1, p.Int("int"))
 }
 
 func TestMapType(t *testing.T) {
@@ -72,9 +69,8 @@ func TestMapType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.Map("map")
-	assert.Equal(true, f)
-	assert.Equal(map[string]interface{}{"key1": "val1", "key2": "val2"}, v)
+	assert.Equal(true, p.Exists("map"))
+	assert.Equal(map[string]interface{}{"key1": "val1", "key2": "val2"}, p.Map("map"))
 }
 
 func TestSliceType(t *testing.T) {
@@ -83,9 +79,8 @@ func TestSliceType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.Slice("array")
-	assert.Equal(true, f)
-	assert.Equal([]interface{}{"val1", "val2"}, v)
+	assert.Equal(true, p.Exists("array"))
+	assert.Equal([]interface{}{"val1", "val2"}, p.Slice("array"))
 }
 
 func TestBoolType(t *testing.T) {
@@ -94,9 +89,8 @@ func TestBoolType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.Bool("bool")
-	assert.Equal(true, f)
-	assert.Equal(true, v)
+	assert.Equal(true, p.Exists("bool"))
+	assert.Equal(true, p.Bool("bool"))
 }
 
 func TestNilType(t *testing.T) {
@@ -105,9 +99,8 @@ func TestNilType(t *testing.T) {
 	p := Properties{}
 	err := p.unmarshalJSON(b)
 	assert.NoError(err)
-	v, f := p.Map("nil")
-	assert.Equal(true, f)
-	assert.Equal(map[string]interface{}{}, v)
+	assert.Equal(true, p.Exists("nil"))
+	assert.Equal(map[string]interface{}{}, p.Map("nil"))
 }
 
 func TestWrongType(t *testing.T) {

@@ -106,6 +106,14 @@ func (b *BaseTask) SetNotify(notify Task, forAction, whenAction action.Enum, del
 	}
 }
 
+func (b *BaseTask) SetOnlyIf(f GuardFunc) {
+	b.OnlyIf = f
+}
+
+func (b *BaseTask) SetNotIf(f GuardFunc) {
+	b.NotIf = f
+}
+
 func (b BaseTask) notifyTasks(action action.Enum) {
 	funcs, found := b.notify[action]
 	if found {
@@ -135,10 +143,11 @@ func (b BaseTask) canRun() (bool, string) {
 	return run, reason
 }
 
-const (
-	logHeaderFormat = "* %s: %s (%s) %s"
-	logErrorFormat  = "! %s"
-	logInfoFormat   = "%s"
+var (
+	logHeaderFormat    string = colorize.Cyan("* %s: %s (%s) %s")
+	logInfoFormat      string = "%s"
+	logHeaderErrFormat string = colorize.Red("* %s: %s (%s) %s")
+	logErrorFormat     string = colorize.Red("! %s")
 )
 
 var colorize = ColorFormat{}
@@ -186,18 +195,18 @@ func (t TaskStatus) Log() {
 		actions = append(actions, a.String())
 
 	}
-	colorFunc := colorize.Green
-	if t.Reason == "error" {
-		colorFunc = colorize.Red
+	format := logHeaderFormat
+	if strings.Contains(t.Reason, "error") {
+		format = logHeaderErrFormat
 	}
-	Log.Printf(colorFunc(logHeaderFormat), t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt))
+	Log.Printf(format, t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt))
 }
 
 func NewTaskError(task fmt.Stringer, action action.Enum, err error) error {
 	if err == nil {
 		return nil
 	}
-	Log.Printf(colorize.Red(logHeaderFormat), task, action, "error", time.Since(time.Now()))
+	Log.Printf(logHeaderFormat, task, action, colorize.Red("error"), time.Since(time.Now()))
 	return err
 }
 
@@ -206,8 +215,8 @@ func handleTaskError(err error, contOnError bool) {
 		return
 	}
 	if contOnError {
-		Log.Printf(colorize.Red(logErrorFormat), err)
+		Log.Printf(logErrorFormat, err)
 	} else {
-		Log.Fatalf(colorize.Red(logErrorFormat), err)
+		Log.Fatalf(logErrorFormat, err)
 	}
 }

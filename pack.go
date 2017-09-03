@@ -29,10 +29,10 @@ type Pack struct {
 	NoRunDelayed bool
 }
 
-const (
-	PackHeaderFormat  = "\nPack: %s (%s) %s\n"
-	PackSectionFormat = "\n[%s %s]\n"
-	PackErrorFormat   = "! %s\n"
+var (
+	PackHeaderFormat  string = colorize.Blue("\nPack: %s (%s) %s\n")
+	PackSectionFormat string = colorize.Blue("\n[%s %s]\n")
+	PackErrorFormat   string = colorize.Red("! %s\n")
 )
 
 func (p Pack) String() string {
