@@ -257,8 +257,6 @@ func main() {
 	packTmplt = `package {{ .PackageName }}
 
 import (
-	"fmt"
-
 	"github.com/mschenk42/gopack"
 )
 
@@ -270,32 +268,14 @@ func Run(props *gopack.Properties, actions []string) {
 			"{{.PackageName}}.prop1": "value",
 		},
 		Actions: actions,
-		RunFunc: setup,
+		ActionMap: map[string]func(p *gopack.Pack){
+			"default": run,
+		},
 	}
 	pack.Run(props)
 }
 
-var (
-	actionMap = map[string]func(p *gopack.Pack){
-		"default": run,
-	}
-)
-
-func setup(pack *gopack.Pack) {
-	if len(pack.Actions) == 0 {
-		actionMap["default"](pack)
-	}
-	for _, action := range pack.Actions {
-		if f, found := actionMap[action]; found {
-			f(pack)
-		} else {
-			gopack.Log.Fatalf(gopack.PackErrorFormat, fmt.Sprintf("pack action %s not found", action))
-		}
-	}
-}
-
 func run(pack *gopack.Pack) {
-	// run tasks and other packs within this method
 }`
 	taskTmplt = `{{- $receiver := .ReceiverName }} {{- $arg := .ReceiverArg -}}
 package {{ .PackageName }}

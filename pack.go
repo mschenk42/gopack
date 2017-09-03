@@ -25,16 +25,17 @@ type Pack struct {
 	Name         string
 	Props        *Properties
 	Redact       []string
-	RunFunc      func(pack *Pack)
 	Actions      []string
+	ActionMap    map[string]func(p *Pack)
 	NoRunDelayed bool
 }
 
 var (
-	PackHeaderFormat   string = colorize.Blue("\nPack: %s (%s) %s")
-	PackSectionFormat  string = colorize.Blue("\n[%s %s]\n")
-	PackErrorFormat    string = colorize.Red("! %s\n")
-	PackPropertyFormat string = colorize.Magenta("%s")
+	PackHeaderFormat       string = colorize.Blue("\nPack: %s (%s) %s")
+	PackSectionFormat      string = colorize.Blue("\n[%s %s]\n")
+	PackErrorFormat        string = colorize.Red("! %s\n")
+	PackPropertyFormat     string = colorize.Magenta("%s")
+	PackActionHeaderFormat string = colorize.Blue("Action: %s (%s) %s")
 )
 
 func (p Pack) String() string {
@@ -43,18 +44,33 @@ func (p Pack) String() string {
 
 func (p *Pack) Run(props *Properties) {
 	t := time.Now()
-	if p.RunFunc == nil {
-		Log.Fatalf(PackErrorFormat, fmt.Sprintf("run function nil for pack %s", p.Name))
-	}
 	p.Props.Merge(props)
 	Log.Printf(PackHeaderFormat, p, "start", "")
 	Log.Printf(PackPropertyFormat, p.Props.Redact(p.Redact))
-	Log.Printf(PackSectionFormat, "run tasks for", p)
-	p.RunFunc(p)
+	Log.Printf(PackSectionFormat, "run actions for", p)
+
+	p.run()
 	if !p.NoRunDelayed {
 		Log.Printf(PackSectionFormat, "run delayed tasks for", p)
 		DelayedNotify.Run()
 	}
+
 	Log.Printf(PackHeaderFormat, p, "end", time.Since(t))
 	Log.Print("")
+}
+
+func (p *Pack) run() {
+	if len(p.Actions) == 0 {
+		p.ActionMap["default"](p)
+	}
+	for _, action := range p.Actions {
+		if f, found := p.ActionMap[action]; found {
+			t := time.Now()
+			Log.Printf(PackActionHeaderFormat, action, "start", "")
+			f(p)
+			Log.Printf(PackActionHeaderFormat, action, "end", time.Since(t))
+		} else {
+			Log.Fatalf(PackErrorFormat, fmt.Sprintf("pack action %s not found", action))
+		}
+	}
 }
