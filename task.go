@@ -206,7 +206,7 @@ func NewTaskError(task fmt.Stringer, action action.Enum, err error) error {
 	if err == nil {
 		return nil
 	}
-	Log.Printf(logHeaderFormat, task, action, colorize.Red("error"), time.Since(time.Now()))
+	Log.Printf(logHeaderErrFormat, task, action, "error", time.Since(time.Now()))
 	return err
 }
 

@@ -30,9 +30,10 @@ type Pack struct {
 }
 
 var (
-	PackHeaderFormat  string = colorize.Blue("\nPack: %s (%s) %s\n")
-	PackSectionFormat string = colorize.Blue("\n[%s %s]\n")
-	PackErrorFormat   string = colorize.Red("! %s\n")
+	PackHeaderFormat   string = colorize.Blue("\nPack: %s (%s) %s")
+	PackSectionFormat  string = colorize.Blue("\n[%s %s]\n")
+	PackErrorFormat    string = colorize.Red("! %s\n")
+	PackPropertyFormat string = colorize.Magenta("%s")
 )
 
 func (p Pack) String() string {
@@ -46,7 +47,7 @@ func (p *Pack) Run(props *Properties) {
 	}
 	p.Props.Merge(props)
 	Log.Printf(PackHeaderFormat, p, "start", "")
-	Log.Printf("%s", p.Props.Redact(p.Redact))
+	Log.Printf(PackPropertyFormat, p.Props.Redact(p.Redact))
 	Log.Printf(PackSectionFormat, "run tasks for", p)
 	p.RunFunc(p)
 	if !p.NoRunDelayed {
