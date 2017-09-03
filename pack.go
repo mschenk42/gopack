@@ -26,6 +26,7 @@ type Pack struct {
 	Props        *Properties
 	Redact       []string
 	RunFunc      func(pack *Pack)
+	Actions      []string
 	NoRunDelayed bool
 }
 

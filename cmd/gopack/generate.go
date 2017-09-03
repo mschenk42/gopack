@@ -251,32 +251,52 @@ import (
 
 func main() {
 	{{ .PackageName }}.Run(gopack.LoadProperties())
-}
-`
+}`
 	runPackReadme = `# {{.PackageName|ToTitle}} Runpack
 `
 	packTmplt = `package {{ .PackageName }}
 
 import (
+	"fmt"
+
 	"github.com/mschenk42/gopack"
 )
 
 // Run initializes the properties and runs the pack
-func Run(props *gopack.Properties) {
+func Run(props *gopack.Properties, actions []string) {
 	pack := gopack.Pack{
 		Name: "{{.PackageName}}",
 		Props: &gopack.Properties{
 			"{{.PackageName}}.prop1": "value",
 		},
-		RunFunc: run,
+		Actions: actions,
+		RunFunc: setup,
 	}
 	pack.Run(props)
 }
 
+var (
+	actionMap = map[string]func(p *gopack.Pack){
+		"default": run,
+	}
+)
+
+func setup(pack *gopack.Pack) {
+	if len(pack.Actions) == 0 {
+		actionMap["default"](pack)
+	}
+	for _, action := range pack.Actions {
+		if f, found := actionMap[action]; found {
+			f(pack)
+		} else {
+			gopack.Log.Fatalf(gopack.PackErrorFormat, fmt.Sprintf("pack action %s not found", action))
+		}
+	}
+}
+
 func run(pack *gopack.Pack) {
 	// run tasks and other packs within this method
-}
-`
+}`
 	taskTmplt = `{{- $receiver := .ReceiverName }} {{- $arg := .ReceiverArg -}}
 package {{ .PackageName }}
 
@@ -320,6 +340,5 @@ func ({{$arg}} {{$receiver}}) String() string {
 
 func ({{$arg}} {{$receiver}}) create() (bool, error) {
 	return true, nil
-}
-`
+}`
 )

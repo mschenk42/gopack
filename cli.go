@@ -4,19 +4,43 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
-)
-
-var (
-	yesFlag = flag.Bool("y", false, "run pack without confirmation")
 )
 
 const (
 	defaultProperties = "gopack.json"
 )
 
-func LoadProperties() *Properties {
+var (
+	yesFlag    = flag.Bool("y", false, "run pack without confirmation")
+	actionFlag = flag.String("actions", "", "pack actions to run")
+	helpFlag   = flag.Bool("h", false, "show help and exit")
+)
+
+func usage() string {
+	x := filepath.Base(os.Args[0])
+	return fmt.Sprintf(`
+
+%s [-y] [--actions action1,action2] [property1.json property2.json ...]
+
+  * attempts to load "gopack.json" if no property files are specified
+`, x)
+}
+
+func LoadProperties() (*Properties, []string) {
 	flag.Parse()
+
+	if *helpFlag {
+		fmt.Fprint(os.Stdout, usage())
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	actions := []string{}
+	if strings.TrimSpace(*actionFlag) != "" {
+		actions = strings.Split(*actionFlag, ",")
+	}
 
 	confirm := *yesFlag
 	if !confirm {
@@ -37,7 +61,7 @@ func LoadProperties() *Properties {
 		}
 
 		for idx, a := range args {
-			fmt.Fprintf(os.Stdout, "loading %s configuration file\n", a)
+			fmt.Fprintf(os.Stdout, PackPropertyFormat, fmt.Sprintf("loading %s configuration file", a))
 			p2 := Properties{}
 
 			f, err := os.Open(a)
@@ -55,13 +79,16 @@ func LoadProperties() *Properties {
 				p = p2
 			}
 		}
-		return &p
+		return &p, actions
 	}
-
-	return nil
+	return nil, actions
 }
 
 func exitOnError(err error) {
-	fmt.Fprint(os.Stderr, err)
+	fmt.Fprint(os.Stderr, usage())
+	flag.PrintDefaults()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, PackErrorFormat, err)
+	}
 	os.Exit(1)
 }
