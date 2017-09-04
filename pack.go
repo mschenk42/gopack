@@ -55,6 +55,11 @@ func (p *Pack) Run(props *Properties) {
 		DelayedNotify.Run()
 	}
 
+	Log.Printf(PackSectionFormat, "summary of tasks ran for", p)
+	for _, x := range TasksRun {
+		Log.Print(x)
+	}
+
 	Log.Printf(PackHeaderFormat, p, "end", time.Since(t))
 	Log.Print("")
 }

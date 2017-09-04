@@ -12,6 +12,7 @@ import (
 
 var (
 	DelayedNotify          taskRunSet = taskRunSet{}
+	TasksRun               []string   = []string{}
 	ErrActionNotRegistered            = errors.New("action not registered with task")
 )
 
@@ -200,6 +201,9 @@ func (t TaskStatus) Log() {
 		format = logHeaderErrFormat
 	}
 	Log.Printf(format, t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt))
+	if status == "run" || status == "running" {
+		TasksRun = append(TasksRun, fmt.Sprintf(format, t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt)))
+	}
 }
 
 func NewTaskError(task fmt.Stringer, action action.Enum, err error) error {
