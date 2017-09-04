@@ -161,7 +161,7 @@ func TestDelayedRun(t *testing.T) {
 	assert.Regexp(fmt.Sprintf(`task3.*create.*%s`, passKeywords), buf.String())
 	re := regexp.MustCompile(fmt.Sprintf(`task2 notified.*create.*%s`, passKeywords))
 	matches := re.FindAllString(buf.String(), -1)
-	assert.Exactlyf(1, len(matches), "task 2 notified more than once")
+	assert.Exactly(1, len(matches), "task 2 notified more than once")
 
 	fmt.Print(buf.String())
 }
@@ -195,7 +195,7 @@ func TestDelayedChainedRun(t *testing.T) {
 	assert.Regexp(fmt.Sprintf(`task3.*create.*%s`, passKeywords), buf.String())
 	re := regexp.MustCompile(fmt.Sprintf(`task(1|2) notified.*create.*%s`, passKeywords))
 	matches := re.FindAllString(buf.String(), -1)
-	assert.Exactlyf(2, len(matches), "notifications should be 2")
+	assert.Exactly(2, len(matches), "notifications should be 2")
 
 	fmt.Print(buf.String())
 }

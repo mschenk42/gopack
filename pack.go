@@ -35,7 +35,7 @@ var (
 	PackSectionFormat      string = colorize.Blue("\n[%s %s]\n")
 	PackErrorFormat        string = colorize.Red("! %s\n")
 	PackPropertyFormat     string = colorize.Magenta("%s")
-	PackActionHeaderFormat string = colorize.Blue("Action: %s (%s) %s")
+	PackActionHeaderFormat string = colorize.Blue("Pack: %s %s (%s) %s")
 )
 
 func (p Pack) String() string {
@@ -66,9 +66,9 @@ func (p *Pack) run() {
 	for _, action := range p.Actions {
 		if f, found := p.ActionMap[action]; found {
 			t := time.Now()
-			Log.Printf(PackActionHeaderFormat, action, "start", "")
+			Log.Printf(PackActionHeaderFormat, p, action, "start", "")
 			f(p)
-			Log.Printf(PackActionHeaderFormat, action, "end", time.Since(t))
+			Log.Printf(PackActionHeaderFormat, p, action, "end", time.Since(t))
 		} else {
 			Log.Fatalf(PackErrorFormat, fmt.Sprintf("pack action %s not found", action))
 		}

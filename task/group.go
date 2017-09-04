@@ -79,11 +79,11 @@ func removeGroupCmd(g Group) error {
 }
 
 func createGroupLinux(g Group) error {
-	_, err := execCmd(time.Second*10, "groupadd", g.Name)
+	_, err := ExecCmd(time.Second*10, "groupadd", g.Name)
 	return err
 }
 
 func removeGroupLinux(g Group) error {
-	_, err := execCmd(time.Second*10, "groupdel", g.Name)
+	_, err := ExecCmd(time.Second*10, "groupdel", g.Name)
 	return err
 }

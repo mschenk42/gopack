@@ -89,13 +89,13 @@ func createUserLinux(u User) error {
 		x = append(x, "-d", u.Home)
 	}
 	x = append(x, u.Name)
-	if _, err := execCmd(time.Second*10, "useradd", x...); err != nil {
+	if _, err := ExecCmd(time.Second*10, "useradd", x...); err != nil {
 		return err
 	}
 	return nil
 }
 
 func removeUserLinux(u User) error {
-	_, err := execCmd(time.Second*10, "userdel", u.Name)
+	_, err := ExecCmd(time.Second*10, "userdel", u.Name)
 	return err
 }

@@ -91,7 +91,7 @@ func chown(path, owner, group string) (bool, error) {
 	return true, nil
 }
 
-func execCmd(timeout time.Duration, command string, args ...string) ([]byte, error) {
+func ExecCmd(timeout time.Duration, command string, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -106,7 +106,7 @@ func execCmd(timeout time.Duration, command string, args ...string) ([]byte, err
 	return b, nil
 }
 
-func execCmdStream(w io.Writer, timeout time.Duration, command string, args ...string) error {
+func ExecCmdStream(w io.Writer, timeout time.Duration, command string, args ...string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
