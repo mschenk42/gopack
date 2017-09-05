@@ -17,10 +17,14 @@ func (p *Properties) String() string {
 }
 
 func (p Properties) Redact(redact []string) *Properties {
-	for _, k := range redact {
-		p[k] = "***"
+	pcopy := Properties{}
+	for k, v := range p {
+		pcopy[k] = v
 	}
-	return &p
+	for _, k := range redact {
+		pcopy[k] = "***"
+	}
+	return &pcopy
 }
 
 func (p *Properties) Merge(props *Properties) {
