@@ -3,9 +3,7 @@ package task
 import (
 	"fmt"
 	"os/user"
-	"runtime"
 	"strings"
-	"time"
 
 	"github.com/mschenk42/gopack"
 	"github.com/mschenk42/gopack/action"
@@ -44,7 +42,7 @@ func (g Group) create() (bool, error) {
 			return false, gopack.NewTaskError(g, action.Create, err)
 		}
 	}
-	if err := createGroupCmd(g); err != nil {
+	if err := createGroup(g); err != nil {
 		return false, gopack.NewTaskError(g, action.Create, err)
 	}
 	return true, nil
@@ -54,36 +52,8 @@ func (g Group) remove() (bool, error) {
 	if _, err := user.LookupGroup(g.Name); err != nil {
 		return false, gopack.NewTaskError(g, action.Remove, err)
 	}
-	if err := removeGroupCmd(g); err != nil {
+	if err := removeGroup(g); err != nil {
 		return false, gopack.NewTaskError(g, action.Remove, err)
 	}
 	return true, nil
-}
-
-func createGroupCmd(g Group) error {
-	switch runtime.GOOS {
-	case "linux":
-		return createGroupLinux(g)
-	default:
-		return fmt.Errorf("not supported for %s", runtime.GOOS)
-	}
-}
-
-func removeGroupCmd(g Group) error {
-	switch runtime.GOOS {
-	case "linux":
-		return removeGroupLinux(g)
-	default:
-		return fmt.Errorf("not supported for %s", runtime.GOOS)
-	}
-}
-
-func createGroupLinux(g Group) error {
-	_, err := ExecCmd(time.Second*10, "groupadd", g.Name)
-	return err
-}
-
-func removeGroupLinux(g Group) error {
-	_, err := ExecCmd(time.Second*10, "groupdel", g.Name)
-	return err
 }

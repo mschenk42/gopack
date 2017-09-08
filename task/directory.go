@@ -67,7 +67,7 @@ func (d Directory) create() (bool, error) {
 	if d.Owner == "" && d.Group == "" {
 		return chgDirectory || chgOwnership || chgMode, nil
 	}
-	if chgOwnership, err = chown(d.Path, d.Owner, d.Group); err != nil {
+	if chgOwnership, err = Chown(d.Path, d.Owner, d.Group); err != nil {
 		return false, gopack.NewTaskError(d, action.Create, err)
 	}
 	return chgDirectory || chgOwnership || chgMode, nil

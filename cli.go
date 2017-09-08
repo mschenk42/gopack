@@ -28,7 +28,7 @@ func usage() string {
 `, x)
 }
 
-func LoadProperties() (*Properties, []string) {
+func CLI() (*Properties, []string) {
 	flag.Parse()
 
 	if *helpFlag {

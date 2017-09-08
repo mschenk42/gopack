@@ -92,7 +92,7 @@ func (t Template) create() (bool, error) {
 	if t.Owner == "" && t.Group == "" {
 		return chgTemplate || chgOwnership || chgMode, nil
 	}
-	if chgOwnership, err = chown(t.Path, t.Owner, t.Group); err != nil {
+	if chgOwnership, err = Chown(t.Path, t.Owner, t.Group); err != nil {
 		return chgTemplate || chgOwnership || chgMode, gopack.NewTaskError(t, action.Create, err)
 	} else {
 		return chgTemplate || chgOwnership || chgMode, nil

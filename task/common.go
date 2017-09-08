@@ -27,7 +27,7 @@ func Fexists(path string) (os.FileInfo, bool, error) {
 	return fi, true, nil
 }
 
-func chown(path, owner, group string) (bool, error) {
+func Chown(path, owner, group string) (bool, error) {
 	var (
 		err      error
 		u        *user.User
