@@ -14,14 +14,14 @@ import (
 const usage = `
 gopack: generate packs and tasks
 
-usage: gopack generate --type=[runpack|pack|task] --name=<string> path
+usage: gopack generate --type=[pack|task] --name=<string> path
 
 `
 
 var (
 	generateCommand = flag.NewFlagSet("generate", flag.ExitOnError)
-	typeToGenerate  = generateCommand.String("type", "task", "task, pack or runpack")
-	typeName        = generateCommand.String("name", "", "name of generated task, pack or runpack (defaults to path's base dir or file name)")
+	typeToGenerate  = generateCommand.String("type", "task", "task or pack")
+	typeName        = generateCommand.String("name", "", "name of generated task or pack(defaults to path's base dir or file name)")
 )
 
 func main() {
@@ -41,11 +41,6 @@ func main() {
 			if err := generatePack(*typeName, generateCommand.Arg(0), false); err != nil {
 				exitOnError(err)
 			}
-
-		case "runpack":
-			if err := generateRunPack(*typeName, generateCommand.Arg(0), false); err != nil {
-				exitOnError(err)
-			}
 		default:
 			exitOnError(nil)
 		}
@@ -63,8 +58,8 @@ func exitOnError(err error) {
 	os.Exit(1)
 }
 
-func generateRunPack(name, path string, force bool) error {
-	projectDir, err := filepath.Abs(path + "-runpack")
+func generatePack(name, path string, force bool) error {
+	projectDir, err := filepath.Abs(path + "-pack")
 	if err != nil {
 		return err
 	}
@@ -78,35 +73,15 @@ func generateRunPack(name, path string, force bool) error {
 		return nil
 	}
 	if name == "" {
-		name = filepath.Base(path)
+		name = strings.ToLower(filepath.Base(path))
 	}
 	if err := os.MkdirAll(filepath.Join(projectDir, name), 0755); err != nil {
 		return err
 	}
 
-	importPath, err := filepath.Rel(os.Getenv("GOPATH"), projectDir)
-	if err != nil {
-		return err
-	}
-	parts := strings.Split(importPath, string(filepath.Separator))
-	parts = append(parts, filepath.Base(path))
-	if len(parts) > 1 {
-		importPath = filepath.Join(parts[1:]...)
-	}
-	if err := generatePack(name, filepath.Join(projectDir, name, name), true); err != nil {
-		return err
-	}
-
-	x := template.Must(template.New("GenRunPackMain").Parse(runPackMain))
+	x := template.Must(template.New("GenPack").Parse(packTmplt))
 	b := &bytes.Buffer{}
-	if err := x.Execute(b,
-		struct {
-			PackageName string
-			ImportPath  string
-		}{
-			name,
-			importPath,
-		}); err != nil {
+	if err := x.Execute(b, struct{ Name string }{name}); err != nil {
 		return err
 	}
 	if err := ioutil.WriteFile(filepath.Join(projectDir, "main.go"), b.Bytes(), 0644); err != nil {
@@ -116,70 +91,16 @@ func generateRunPack(name, path string, force bool) error {
 	funcMap := template.FuncMap{
 		"ToTitle": strings.Title,
 	}
-	x = template.Must(template.New("RunPackReadme").Funcs(funcMap).Parse(runPackReadme))
+	x = template.Must(template.New("PackReadme").Funcs(funcMap).Parse(packReadmeTmplt))
 	b = &bytes.Buffer{}
-	if err := x.Execute(b,
-		struct {
-			PackageName string
-			ImportPath  string
-		}{
-			name,
-			importPath,
-		}); err != nil {
+	if err := x.Execute(b, struct{ Name string }{name}); err != nil {
 		return err
 	}
 	if err := ioutil.WriteFile(filepath.Join(projectDir, "README.md"), b.Bytes(), 0644); err != nil {
 		return err
 	}
 
-	fmt.Fprintf(os.Stdout, "runpack %s generated\n", projectDir)
-	return nil
-}
-
-func generatePack(name, path string, force bool) error {
-	ext := filepath.Ext(path)
-	if ext != ".go" {
-		if ext != "" {
-			path = strings.Replace(path, "."+ext, "", 1)
-		}
-		path += ".go"
-	}
-	p, err := filepath.Abs(path)
-	if err != nil {
-		return err
-	}
-	fi, err := os.Stat(p)
-	switch {
-	case err != nil && !os.IsNotExist(err):
-		return err
-	case fi != nil && fi.IsDir():
-		return fmt.Errorf("path %s is a directory and not a file", p)
-	case !os.IsNotExist(err) && !force && !confirm(fmt.Sprintf("Overwrite %s (y/n)? ", p)):
-		return nil
-	}
-	basePath := filepath.Base(filepath.Dir(p))
-	if name == "" {
-		name = strings.Split(filepath.Base(p), ".")[0]
-		name = fmt.Sprintf("%s%s", strings.ToUpper(name[0:1]), strings.ToLower(name[1:]))
-	}
-
-	funcMap := template.FuncMap{
-		"ToLower": strings.ToLower,
-	}
-	x := template.Must(template.New("GenPack").Funcs(funcMap).Parse(packTmplt))
-	b := &bytes.Buffer{}
-	if err := x.Execute(b,
-		struct {
-			PackageName string
-		}{
-			basePath,
-		}); err != nil {
-		return err
-	}
-	if err := ioutil.WriteFile(p, b.Bytes(), 0644); err != nil {
-		return err
-	}
-	fmt.Fprintf(os.Stdout, "pack %s generated\n", p)
+	fmt.Fprintf(os.Stdout, "pack %s generated\n", projectDir)
 	return nil
 }
 
@@ -242,31 +163,20 @@ func confirm(prompt string) bool {
 }
 
 const (
-	runPackMain = `package main
+	packTmplt = `package main
 
 import (
 	"github.com/mschenk42/gopack"
-	"{{.ImportPath}}"
 )
 
 func main() {
-	{{ .PackageName }}.Run(gopack.LoadProperties())
-}`
-	runPackReadme = `# {{.PackageName|ToTitle}} Runpack
-`
-	packTmplt = `package {{ .PackageName }}
-
-import (
-	"github.com/mschenk42/gopack"
-)
-
-// Run initializes the properties and runs the pack
-func Run(props *gopack.Properties, actions []string) {
+	props, actions := gopack.CLI()
 	pack := gopack.Pack{
-		Name: "{{.PackageName}}",
+		Name: "{{.Name}}",
 		Props: &gopack.Properties{
-			"{{.PackageName}}.prop1": "value",
+			"{{.Name}}.prop1": "val1",
 		},
+		Redact:  []string{"{{.Name}}.password"},
 		Actions: actions,
 		ActionMap: map[string]func(p *gopack.Pack){
 			"default": run,
@@ -276,7 +186,10 @@ func Run(props *gopack.Properties, actions []string) {
 }
 
 func run(pack *gopack.Pack) {
+
 }`
+	packReadmeTmplt = `# {{.Name|ToTitle}} Pack
+`
 	taskTmplt = `{{- $receiver := .ReceiverName }} {{- $arg := .ReceiverArg -}}
 package {{ .PackageName }}
 
