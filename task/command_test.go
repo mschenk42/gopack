@@ -27,7 +27,7 @@ func TestCommandStream(t *testing.T) {
 
 	assert.Equal(gopack.ActionRunStatus{action.Run: true}, c.Run(action.Run))
 	assert.Regexp(".*hello\n", buf.String())
-	assert.Regexp(`.*command.*echo.*hello.*run.*(running)`, buf.String())
-	assert.Regexp(`.*command.*echo.*hello.*run.*(run)`, buf.String())
+	assert.Regexp(`.*command.*echo.*hello.*run.*(started)`, buf.String())
+	assert.Regexp(`.*command.*echo.*hello.*run.*(has run)`, buf.String())
 	fmt.Print(buf.String())
 }

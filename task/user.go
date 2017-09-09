@@ -41,21 +41,21 @@ func (u User) create() (bool, error) {
 		return false, nil
 	} else {
 		if !strings.Contains(err.Error(), "unknown user") {
-			return false, gopack.NewTaskError(u, action.Create, err)
+			return false, err
 		}
 	}
 	if err := createUser(u); err != nil {
-		return false, gopack.NewTaskError(u, action.Create, err)
+		return false, err
 	}
 	return true, nil
 }
 
 func (u User) remove() (bool, error) {
 	if _, err := user.Lookup(u.Name); err != nil {
-		return false, gopack.NewTaskError(u, action.Remove, err)
+		return false, err
 	}
 	if err := removeUser(u); err != nil {
-		return false, gopack.NewTaskError(u, action.Remove, err)
+		return false, err
 	}
 	return true, nil
 }

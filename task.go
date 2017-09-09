@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/mschenk42/gopack/action"
@@ -50,41 +49,40 @@ type Task interface {
 }
 
 func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []action.Enum) ActionRunStatus {
-	t := time.Now()
+	var (
+		f         action.MethodFunc
+		found     bool
+		err       error
+		canRun    bool
+		reason    string
+		runStatus ActionRunStatus = ActionRunStatus{}
+		timeStart time.Time       = time.Now()
+	)
 
 	if len(runActions) == 0 {
-		TaskStatus{Task: task, Actions: action.NewSlice(action.Nil), Reason: "error", StartedAt: t}.Log()
-		handleTaskError(fmt.Errorf("unable to run, no action given"), b.ContOnError)
-		return ActionRunStatus{}
+		b.logError(task, action.NewSlice(action.Nil), fmt.Errorf("unable to run, no action given"), timeStart)
+		return runStatus
 	}
 
-	runStatus := ActionRunStatus{}
-	for _, a := range runActions {
-		runStatus[a] = false
-	}
-
-	// can we run the actions for this command?
-	canRun, reason := b.canRun()
-	if !canRun {
-		TaskStatus{Task: task, Actions: runActions, Reason: reason, StartedAt: t}.Log()
+	if canRun, reason = b.canRun(); !canRun {
+		b.logSkipped(task, runActions, reason, timeStart)
 		return runStatus
 	}
 
 	for _, a := range runActions {
-		f, found := regActions.Method(a)
-		if !found {
-			TaskStatus{Task: task, Actions: action.NewSlice(a), HasRun: false, CanRun: true, Reason: "error", StartedAt: t}.Log()
-			handleTaskError(NewTaskError(task, a, ErrActionNotRegistered), b.ContOnError)
-			runStatus[a] = false
+		if f, found = regActions.Method(a); !found {
+			b.logError(task, action.NewSlice(a), ErrActionNotRegistered, timeStart)
 			continue
 		}
-		hasRun, err := f()
-		if err == nil {
-			TaskStatus{Task: task, Actions: action.NewSlice(a), HasRun: hasRun, CanRun: true, Reason: reason, StartedAt: t}.Log()
+		b.logStart(task, a)
+		if runStatus[a], err = f(); err == nil {
+			b.logRun(task, a, runStatus[a], reason, timeStart)
+			if runStatus[a] {
+				b.notifyTasks(a)
+			}
+		} else {
+			b.handleTaskError(err)
 		}
-		handleTaskError(err, b.ContOnError)
-		b.notifyTasks(a)
-		runStatus[a] = hasRun
 	}
 	return runStatus
 }
@@ -133,22 +131,23 @@ func (b BaseTask) canRun() (bool, string) {
 	if b.OnlyIf != nil {
 		reason = "due to only_if"
 		run, err = b.OnlyIf()
-		handleTaskError(err, b.ContOnError)
+		b.handleTaskError(err)
 	}
 	if b.NotIf != nil {
 		reason = "due to not_if"
 		run, err = b.NotIf()
 		run = !run
-		handleTaskError(err, b.ContOnError)
+		b.handleTaskError(err)
 	}
 	return run, reason
 }
 
 var (
-	logHeaderFormat    string = colorize.Cyan("* %s: %s (%s) %s")
-	logInfoFormat      string = "%s"
-	logHeaderErrFormat string = colorize.Red("* %s: %s (%s) %s")
-	logErrorFormat     string = colorize.Red("! %s")
+	logStartFmt     string = colorize.Cyan("* %s: %s (%s)")
+	logErrHeaderFmt string = colorize.Red("* %s: %s (%s) %s")
+	logRunFmt       string = colorize.Cyan("  ~ %s: %s (%s) %s")
+	logErrFmt       string = colorize.Red("   ! %s")
+	logInfoFmt      string = "%s"
 )
 
 var colorize = ColorFormat{}
@@ -161,66 +160,43 @@ type taskInfoWriter struct {
 }
 
 func (t taskInfoWriter) Write(b []byte) (int, error) {
-	Log.Printf(logInfoFormat, b)
+	Log.Printf(logInfoFmt, b)
 	return len(b), nil
 }
 
-type TaskStatus struct {
-	Task      Task
-	Actions   []action.Enum
-	IsRunning bool
-	HasRun    bool
-	CanRun    bool
-	Reason    string
-	StartedAt time.Time
+func (b BaseTask) logStart(task Task, a action.Enum) {
+	Log.Printf(logStartFmt, task, a, "started")
 }
 
-func (t TaskStatus) Log() {
-	status := ""
-	switch {
-	case t.IsRunning:
-		status = "running"
-	case !t.CanRun && t.Reason != "":
-		status = fmt.Sprintf("skipped %s", t.Reason)
-	case !t.CanRun:
-		status = "skipped"
-	case t.HasRun && t.Reason != "":
-		status = fmt.Sprintf("run %s", t.Reason)
-	case t.HasRun:
-		status = "run"
-	default:
-		status = "up to date"
+func (b BaseTask) logRun(task Task, a action.Enum, hasRun bool, reason string, t time.Time) {
+	s := fmt.Sprintf(logRunFmt, task, a, "up to date", time.Since(t))
+	if hasRun {
+		status := "has run"
+		if reason != "" {
+			status = fmt.Sprintf("%s %s", status, reason)
+		}
+		s = fmt.Sprintf(logRunFmt, task, a, status, time.Since(t))
+		TasksRun = append(TasksRun, s)
 	}
-	actions := []string{}
-	for _, a := range t.Actions {
-		actions = append(actions, a.String())
-
-	}
-	format := logHeaderFormat
-	if strings.Contains(t.Reason, "error") {
-		format = logHeaderErrFormat
-	}
-	Log.Printf(format, t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt))
-	if status == "run" || status == "running" {
-		TasksRun = append(TasksRun, fmt.Sprintf(format, t.Task, strings.Join(actions, ","), status, time.Since(t.StartedAt)))
-	}
+	Log.Printf(s)
 }
 
-func NewTaskError(task fmt.Stringer, action action.Enum, err error) error {
-	if err == nil {
-		return nil
-	}
-	Log.Printf(logHeaderErrFormat, task, action, "error", time.Since(time.Now()))
-	return err
+func (b BaseTask) logSkipped(task Task, a []action.Enum, reason string, t time.Time) {
+	Log.Printf(logRunFmt, task, a, fmt.Sprintf("skipped %s", reason), time.Since(t))
 }
 
-func handleTaskError(err error, contOnError bool) {
+func (b BaseTask) logError(task Task, a []action.Enum, err error, t time.Time) {
+	Log.Printf(logErrHeaderFmt, task, a, "error", time.Since(t))
+	b.handleTaskError(err)
+}
+
+func (b BaseTask) handleTaskError(err error) {
 	if err == nil {
 		return
 	}
-	if contOnError {
-		Log.Printf(logErrorFormat, err)
+	if b.ContOnError {
+		Log.Printf(logErrFmt, err)
 	} else {
-		Log.Fatalf(logErrorFormat, err)
+		Log.Fatalf(logErrFmt, err)
 	}
 }

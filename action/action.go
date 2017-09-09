@@ -45,8 +45,8 @@ var (
 )
 
 type Enum int
-type Methods map[Enum]methodFunc
-type methodFunc func() (bool, error)
+type Methods map[Enum]MethodFunc
+type MethodFunc func() (bool, error)
 
 func (a Enum) name() (string, bool) {
 	x, found := names[a]
@@ -61,7 +61,7 @@ func (a Enum) String() string {
 	return x
 }
 
-func (m Methods) Method(a Enum) (methodFunc, bool) {
+func (m Methods) Method(a Enum) (MethodFunc, bool) {
 	x, found := m[a]
 	return x, found
 }

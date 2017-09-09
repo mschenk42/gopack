@@ -42,15 +42,14 @@ func (c Command) String() string {
 }
 
 func (c Command) run() (bool, error) {
-	gopack.TaskStatus{Task: c, Actions: action.NewSlice(action.Run), IsRunning: true, CanRun: true, StartedAt: time.Now()}.Log()
 	if c.Stream {
 		if err := ExecCmdStream(gopack.NewTaskInfoWriter(), c.Timeout, c.Name, c.Args...); err != nil {
-			return false, gopack.NewTaskError(c, action.Run, err)
+			return false, err
 		}
 	} else {
 		b, err := ExecCmd(c.Timeout, c.Name, c.Args...)
 		if err != nil {
-			return false, gopack.NewTaskError(c, action.Run, err)
+			return false, err
 		}
 		if string(b) != "" {
 			gopack.NewTaskInfoWriter().Write(b)

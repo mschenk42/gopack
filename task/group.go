@@ -39,21 +39,21 @@ func (g Group) create() (bool, error) {
 		return false, nil
 	} else {
 		if !strings.Contains(err.Error(), "unknown group") {
-			return false, gopack.NewTaskError(g, action.Create, err)
+			return false, err
 		}
 	}
 	if err := createGroup(g); err != nil {
-		return false, gopack.NewTaskError(g, action.Create, err)
+		return false, err
 	}
 	return true, nil
 }
 
 func (g Group) remove() (bool, error) {
 	if _, err := user.LookupGroup(g.Name); err != nil {
-		return false, gopack.NewTaskError(g, action.Remove, err)
+		return false, err
 	}
 	if err := removeGroup(g); err != nil {
-		return false, gopack.NewTaskError(g, action.Remove, err)
+		return false, err
 	}
 	return true, nil
 }

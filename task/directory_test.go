@@ -51,6 +51,7 @@ func TestCreateExistingDirectory(t *testing.T) {
 
 	_, err = os.Stat(testDir)
 	assert.Nil(err)
+	assert.Regexp(`.*directory.*/tmp/create-existing-dir.*create.*(started)`, buf.String())
 	assert.Regexp(`.*directory.*/tmp/create-existing-dir.*create.*(up to date)`, buf.String())
 }
 

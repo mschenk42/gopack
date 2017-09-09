@@ -50,12 +50,12 @@ func (d Directory) create() (bool, error) {
 	)
 
 	if fi, found, err = Fexists(d.Path); err != nil {
-		return false, gopack.NewTaskError(d, action.Create, err)
+		return false, err
 	}
 	if !found {
 		chgDirectory = true
 		if err = os.MkdirAll(d.Path, d.Mode); err != nil {
-			return false, gopack.NewTaskError(d, action.Create, err)
+			return false, err
 		}
 	} else {
 		if fi.Mode().Perm() != d.Mode.Perm() {
@@ -68,7 +68,7 @@ func (d Directory) create() (bool, error) {
 		return chgDirectory || chgOwnership || chgMode, nil
 	}
 	if chgOwnership, err = Chown(d.Path, d.Owner, d.Group); err != nil {
-		return false, gopack.NewTaskError(d, action.Create, err)
+		return false, err
 	}
 	return chgDirectory || chgOwnership || chgMode, nil
 }
@@ -79,12 +79,12 @@ func (d Directory) remove() (bool, error) {
 		err   error
 	)
 	if _, found, err = Fexists(d.Path); err != nil {
-		return false, gopack.NewTaskError(d, action.Create, err)
+		return false, err
 	}
 	if !found {
 		return false, nil
 	}
 	//TODO: optionally allow RemoveAll
 	err = os.Remove(d.Path)
-	return true, gopack.NewTaskError(d, action.Remove, err)
+	return true, err
 }

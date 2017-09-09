@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	failKeywords = "\\(up to date\\)"
-	passKeywords = "\\(run\\) "
+	passKeywords = "\\(has run\\) "
 )
 
 func TestRunTask(t *testing.T) {
