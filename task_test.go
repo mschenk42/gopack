@@ -155,7 +155,7 @@ func TestDelayedRun(t *testing.T) {
 
 	assert.NotPanics(func() { t1.Run(action.Create) })
 	assert.NotPanics(func() { t3.Run(action.Create) })
-	assert.NotPanics(func() { DelayedNotify.Run() })
+	assert.NotPanics(func() { delayedNotify.Run() })
 	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, passKeywords), buf.String())
 	assert.Regexp(fmt.Sprintf(`task3.*create.*%s`, passKeywords), buf.String())
 	re := regexp.MustCompile(fmt.Sprintf(`task2 notified.*create.*%s`, passKeywords))
@@ -189,7 +189,7 @@ func TestDelayedChainedRun(t *testing.T) {
 	t3.SetNotify(t2, action.Create, action.Create, true)
 
 	assert.NotPanics(func() { t3.Run(action.Create) })
-	assert.NotPanics(func() { DelayedNotify.Run() })
+	assert.NotPanics(func() { delayedNotify.Run() })
 	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, passKeywords), buf.String())
 	assert.Regexp(fmt.Sprintf(`task3.*create.*%s`, passKeywords), buf.String())
 	re := regexp.MustCompile(fmt.Sprintf(`task(1|2) notified.*create.*%s`, passKeywords))

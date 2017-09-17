@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	DelayedNotify          taskRunSet = taskRunSet{}
-	TasksRun               []string   = []string{}
-	ErrActionNotRegistered            = errors.New("action not registered with task")
-	IndentLevel            int
+	delayedNotify taskRunSet = taskRunSet{}
+	tasksRun      []string   = []string{}
+	indentLevel   int
 )
 
 type BaseTask struct {
@@ -63,24 +62,24 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 		timeStart time.Time       = time.Now()
 	)
 
-	IndentLevel += 1
+	indentLevel += 1
 
 	if len(runActions) == 0 {
 		b.logError(task, action.NewSlice(action.Nil), fmt.Errorf("unable to run, no action given"), timeStart)
-		IndentLevel -= 1
+		indentLevel -= 1
 		return runStatus
 	}
 
 	if canRun, reason = b.canRun(); !canRun {
 		b.logSkipped(task, runActions, reason, timeStart)
-		IndentLevel -= 1
+		indentLevel -= 1
 		return runStatus
 	}
 
 	for _, a := range runActions {
 		timeStart = time.Now()
 		if f, found = regActions.Method(a); !found {
-			b.logError(task, action.NewSlice(a), ErrActionNotRegistered, timeStart)
+			b.logError(task, action.NewSlice(a), errors.New("action not registered with task"), timeStart)
 			continue
 		}
 		b.logStart(task, a)
@@ -92,11 +91,11 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 		} else {
 			b.handleTaskError(err)
 		}
-		if IndentLevel == 1 {
+		if indentLevel == 1 {
 			Log.Println()
 		}
 	}
-	IndentLevel -= 1
+	indentLevel -= 1
 	return runStatus
 }
 
@@ -109,7 +108,7 @@ func (b *BaseTask) SetNotify(notify Task, forAction, whenAction action.Enum, del
 	}
 	if delayed {
 		b.notify[whenAction][fmt.Sprintf("%s:%s", notify, forAction)] = func() {
-			DelayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(forAction) }
+			delayedNotify[fmt.Sprintf("%s:%s", notify, forAction)] = func() { notify.Run(forAction) }
 		}
 	} else {
 		b.notify[whenAction][fmt.Sprintf("%s:%s", notify, forAction)] = func() {
@@ -166,10 +165,10 @@ var (
 var colorize = ColorFormat{}
 
 func logIndent() string {
-	if IndentLevel-1 <= 0 {
+	if indentLevel-1 <= 0 {
 		return ""
 	}
-	return strings.Repeat(" ", (IndentLevel-1)*2)
+	return strings.Repeat(" ", (indentLevel-1)*2)
 }
 
 func NewTaskInfoWriter() io.Writer {
@@ -201,8 +200,8 @@ func (b BaseTask) logRun(task Task, a action.Enum, hasRun bool, reason string, t
 		}
 		s = fmt.Sprintf(logRunFmt, logIndent(), task, a, status, time.Since(t))
 		// let's just track the top most tasks
-		if IndentLevel == 1 {
-			TasksRun = append(TasksRun, fmt.Sprintf(logRunFmt, "", task, a, status, time.Since(t)))
+		if indentLevel == 1 {
+			tasksRun = append(tasksRun, fmt.Sprintf(logRunFmt, "", task, a, status, time.Since(t)))
 		}
 	}
 	Log.Printf(s)

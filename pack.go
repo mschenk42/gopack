@@ -52,11 +52,11 @@ func (p *Pack) Run(props *Properties) {
 	p.run()
 	if !p.NoRunDelayed {
 		Log.Printf(PackSectionFormat, "run delayed tasks for", p)
-		DelayedNotify.Run()
+		delayedNotify.Run()
 	}
 
 	Log.Printf(PackSectionFormat, "summary of tasks run for", p)
-	for _, x := range TasksRun {
+	for _, x := range tasksRun {
 		Log.Print(x)
 	}
 
