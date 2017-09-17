@@ -78,6 +78,7 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 	}
 
 	for _, a := range runActions {
+		timeStart = time.Now()
 		if f, found = regActions.Method(a); !found {
 			b.logError(task, action.NewSlice(a), ErrActionNotRegistered, timeStart)
 			continue
