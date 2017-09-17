@@ -1,9 +1,12 @@
 package gopack
 
 import (
+	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/mschenk42/gopack/action"
@@ -13,6 +16,7 @@ var (
 	DelayedNotify          taskRunSet = taskRunSet{}
 	TasksRun               []string   = []string{}
 	ErrActionNotRegistered            = errors.New("action not registered with task")
+	IndentLevel            int
 )
 
 type BaseTask struct {
@@ -59,13 +63,17 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 		timeStart time.Time       = time.Now()
 	)
 
+	IndentLevel += 1
+
 	if len(runActions) == 0 {
 		b.logError(task, action.NewSlice(action.Nil), fmt.Errorf("unable to run, no action given"), timeStart)
+		IndentLevel -= 1
 		return runStatus
 	}
 
 	if canRun, reason = b.canRun(); !canRun {
 		b.logSkipped(task, runActions, reason, timeStart)
+		IndentLevel -= 1
 		return runStatus
 	}
 
@@ -83,7 +91,11 @@ func (b BaseTask) RunActions(task Task, regActions action.Methods, runActions []
 		} else {
 			b.handleTaskError(err)
 		}
+		if IndentLevel == 1 {
+			Log.Println()
+		}
 	}
+	IndentLevel -= 1
 	return runStatus
 }
 
@@ -143,14 +155,21 @@ func (b BaseTask) canRun() (bool, string) {
 }
 
 var (
-	logStartFmt     string = colorize.Cyan("* %s: %s (%s)")
-	logErrHeaderFmt string = colorize.Red("* %s: %s (%s) %s")
-	logRunFmt       string = colorize.Cyan("  ~ %s: %s (%s) %s")
-	logErrFmt       string = colorize.Red("   ! %s")
-	logInfoFmt      string = "%s"
+	logStartFmt     string = colorize.Cyan("%s%s: %s (%s)")
+	logErrHeaderFmt string = colorize.Red("%s%s: %s (%s) %s")
+	logRunFmt       string = colorize.Cyan("%s%s: %s (%s) %s")
+	logErrFmt       string = colorize.Red("%s! %s")
+	logInfoFmt      string = "%s%s"
 )
 
 var colorize = ColorFormat{}
+
+func logIndent() string {
+	if IndentLevel-1 <= 0 {
+		return ""
+	}
+	return strings.Repeat(" ", (IndentLevel-1)*2)
+}
 
 func NewTaskInfoWriter() io.Writer {
 	return taskInfoWriter{}
@@ -160,33 +179,40 @@ type taskInfoWriter struct {
 }
 
 func (t taskInfoWriter) Write(b []byte) (int, error) {
-	Log.Printf(logInfoFmt, b)
+	buf := bytes.NewBuffer(b)
+	scanner := bufio.NewScanner(buf)
+	for scanner.Scan() {
+		Log.Printf(logInfoFmt, logIndent(), scanner.Text())
+	}
 	return len(b), nil
 }
 
 func (b BaseTask) logStart(task Task, a action.Enum) {
-	Log.Printf(logStartFmt, task, a, "started")
+	Log.Printf(logStartFmt, logIndent(), task, a, "started")
 }
 
 func (b BaseTask) logRun(task Task, a action.Enum, hasRun bool, reason string, t time.Time) {
-	s := fmt.Sprintf(logRunFmt, task, a, "up to date", time.Since(t))
+	s := fmt.Sprintf(logRunFmt, logIndent(), task, a, "up to date", time.Since(t))
 	if hasRun {
 		status := "has run"
 		if reason != "" {
 			status = fmt.Sprintf("%s %s", status, reason)
 		}
-		s = fmt.Sprintf(logRunFmt, task, a, status, time.Since(t))
-		TasksRun = append(TasksRun, s)
+		s = fmt.Sprintf(logRunFmt, logIndent(), task, a, status, time.Since(t))
+		// let's just track the top most tasks
+		if IndentLevel == 1 {
+			TasksRun = append(TasksRun, fmt.Sprintf(logRunFmt, "", task, a, status, time.Since(t)))
+		}
 	}
 	Log.Printf(s)
 }
 
 func (b BaseTask) logSkipped(task Task, a []action.Enum, reason string, t time.Time) {
-	Log.Printf(logRunFmt, task, a, fmt.Sprintf("skipped %s", reason), time.Since(t))
+	Log.Printf(logRunFmt, logIndent(), task, a, fmt.Sprintf("skipped %s", reason), time.Since(t))
 }
 
 func (b BaseTask) logError(task Task, a []action.Enum, err error, t time.Time) {
-	Log.Printf(logErrHeaderFmt, task, a, "error", time.Since(t))
+	Log.Printf(logErrHeaderFmt, logIndent(), task, a, "error", time.Since(t))
 	b.handleTaskError(err)
 }
 
@@ -195,8 +221,8 @@ func (b BaseTask) handleTaskError(err error) {
 		return
 	}
 	if b.ContOnError {
-		Log.Printf(logErrFmt, err)
+		Log.Printf(logErrFmt, logIndent(), err)
 	} else {
-		Log.Fatalf(logErrFmt, err)
+		Log.Fatalf(logErrFmt, logIndent(), err)
 	}
 }
