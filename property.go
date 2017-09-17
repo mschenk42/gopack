@@ -98,11 +98,8 @@ func (p *Properties) Load(r io.Reader) error {
 }
 
 func (p *Properties) Save(w io.Writer) error {
-	b, err := p.marshalJSON()
-	if err != nil {
-		return err
-	}
-	_, err = w.Write(b)
+	// let's save it in a pretty json format
+	_, err := w.Write([]byte(p.String()))
 	return err
 }
 
