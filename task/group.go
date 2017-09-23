@@ -15,13 +15,13 @@ type Group struct {
 	gopack.BaseTask
 }
 
-func (g Group) Run(runActions ...action.Enum) gopack.ActionRunStatus {
+func (g Group) Run(runActions ...action.Name) gopack.ActionRunStatus {
 	g.setDefaults()
 	return g.RunActions(&g, g.registerActions(), runActions)
 }
 
-func (g Group) registerActions() action.Methods {
-	return action.Methods{
+func (g Group) registerActions() action.Funcs {
+	return action.Funcs{
 		action.Create: g.create,
 		action.Remove: g.remove,
 	}
@@ -42,9 +42,7 @@ func (g Group) create() (bool, error) {
 			return false, err
 		}
 	}
-	if err := createGroup(g); err != nil {
-		return false, err
-	}
+	createGroup(g)
 	return true, nil
 }
 
@@ -52,8 +50,6 @@ func (g Group) remove() (bool, error) {
 	if _, err := user.LookupGroup(g.Name); err != nil {
 		return false, err
 	}
-	if err := removeGroup(g); err != nil {
-		return false, err
-	}
+	removeGroup(g)
 	return true, nil
 }

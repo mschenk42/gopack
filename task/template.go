@@ -24,13 +24,13 @@ type Template struct {
 	gopack.BaseTask
 }
 
-func (t Template) Run(runActions ...action.Enum) gopack.ActionRunStatus {
+func (t Template) Run(runActions ...action.Name) gopack.ActionRunStatus {
 	t.setDefaults()
 	return t.RunActions(&t, t.registerActions(), runActions)
 }
 
-func (t Template) registerActions() action.Methods {
-	return action.Methods{
+func (t Template) registerActions() action.Funcs {
+	return action.Funcs{
 		action.Create: t.create,
 	}
 }
@@ -92,7 +92,7 @@ func (t Template) create() (bool, error) {
 	if t.Owner == "" && t.Group == "" {
 		return chgTemplate || chgOwnership || chgMode, nil
 	}
-	if chgOwnership, err = Chown(t.Path, t.Owner, t.Group); err != nil {
+	if chgOwnership, err = chown(t.Path, t.Owner, t.Group); err != nil {
 		return chgTemplate || chgOwnership || chgMode, err
 	} else {
 		return chgTemplate || chgOwnership || chgMode, nil

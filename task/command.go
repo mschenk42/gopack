@@ -1,7 +1,10 @@
 package task
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"os/exec"
 	"time"
 
 	"github.com/mschenk42/gopack"
@@ -19,13 +22,13 @@ type Command struct {
 }
 
 // Run initializes default property values and delegates to BaseTask RunActions method
-func (c Command) Run(runActions ...action.Enum) gopack.ActionRunStatus {
+func (c Command) Run(runActions ...action.Name) gopack.ActionRunStatus {
 	c.setDefaults()
 	return c.RunActions(&c, c.registerActions(), runActions)
 }
 
-func (c Command) registerActions() action.Methods {
-	return action.Methods{
+func (c Command) registerActions() action.Funcs {
+	return action.Funcs{
 		action.Run: c.run,
 	}
 }
@@ -43,11 +46,11 @@ func (c Command) String() string {
 
 func (c Command) run() (bool, error) {
 	if c.Stream {
-		if err := ExecCmdStream(gopack.NewTaskInfoWriter(), c.Timeout, c.Name, c.Args...); err != nil {
-			return false, err
+		if err := execCmdStream(gopack.NewTaskInfoWriter(), c.Timeout, c.Name, c.Args...); err != nil {
+			return false, fmt.Errorf("unable to execute %s %+v, %s", c.Name, c.Args, err)
 		}
 	} else {
-		b, err := ExecCmd(c.Timeout, c.Name, c.Args...)
+		b, err := execCmd(c.Timeout, c.Name, c.Args...)
 		if err != nil {
 			return false, err
 		}
@@ -56,4 +59,29 @@ func (c Command) run() (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+func execCmd(timeout time.Duration, command string, args ...string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, command, args...)
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return b, err
+	}
+	if ctx.Err() == context.DeadlineExceeded {
+		return b, ctx.Err()
+	}
+	return b, nil
+}
+
+func execCmdStream(w io.Writer, timeout time.Duration, command string, args ...string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, command, args...)
+	cmd.Stdout = w
+	cmd.Stderr = w
+	return cmd.Run()
 }

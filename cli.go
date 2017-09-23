@@ -61,7 +61,7 @@ func CLI() (*Properties, []string) {
 		}
 
 		for idx, a := range args {
-			fmt.Fprintf(os.Stdout, PackPropertyFormat, fmt.Sprintf("loading %s configuration file", a))
+			fmt.Fprintf(os.Stdout, packPropertyFormat, fmt.Sprintf("loading %s configuration file", a))
 			p2 := Properties{}
 
 			f, err := os.Open(a)
@@ -90,7 +90,7 @@ func exitOnError(err error) {
 	fmt.Fprint(os.Stderr, usage())
 	flag.PrintDefaults()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, PackErrorFormat, err)
+		fmt.Fprintf(os.Stderr, packErrorFormat, err)
 	}
 	os.Exit(1)
 }

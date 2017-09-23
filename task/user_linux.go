@@ -1,23 +1,31 @@
 package task
 
-import "time"
+import (
+	"time"
 
-func createUser(u User) error {
-	x := []string{}
+	"github.com/mschenk42/gopack/action"
+)
+
+func createUser(u User) {
+	args := []string{}
 	if u.Group != "" {
-		x = append(x, "-g", u.Group)
+		args = append(args, "-g", u.Group)
 	}
 	if u.Home != "" {
-		x = append(x, "-d", u.Home)
+		args = append(args, "-d", u.Home)
 	}
-	x = append(x, u.Name)
-	if _, err := ExecCmd(time.Second*10, "useradd", x...); err != nil {
-		return err
-	}
-	return nil
+	args = append(args, u.Name)
+	Command{
+		Name:    "useradd",
+		Args:    args,
+		Timeout: time.Second * 10,
+	}.Run(action.Run)
 }
 
-func removeUser(u User) error {
-	_, err := ExecCmd(time.Second*10, "userdel", u.Name)
-	return err
+func removeUser(u User) {
+	Command{
+		Name:    "userdel",
+		Args:    []string{u.Name},
+		Timeout: time.Second * 10,
+	}.Run(action.Run)
 }

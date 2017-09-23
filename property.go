@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+
+	"github.com/mschenk42/gopack/color"
 )
 
 type Properties map[string]interface{}
@@ -11,7 +13,7 @@ type Properties map[string]interface{}
 func (p *Properties) String() string {
 	b, err := json.MarshalIndent(p, "", "  ")
 	if err != nil {
-		Log.Fatalf(colorize.Red("! %s"), err)
+		Log.Fatalf(color.Red("! %s"), err)
 	}
 	return string(b)
 }

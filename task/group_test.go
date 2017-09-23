@@ -29,13 +29,13 @@ func TestCreateGroupLinux(t *testing.T) {
 	}
 
 	defer func() {
-		x.remove()
+		assert.NotPanics(func() { x.remove() }, "x.remove() %s", x)
 	}()
 
-	assert.NotPanics(func() { x.Run(action.Create) })
+	assert.NotPanics(func() { x.Run(action.Create) }, "action.Create %s", x)
 	assert.Regexp(`.*group test.*create.*(run)`, buf.String())
 	_, err := user.LookupGroup(x.Name)
-	assert.NoError(err)
+	assert.NoError(err, "group not found", x.Name)
 	fmt.Print(buf.String())
 }
 
@@ -55,10 +55,10 @@ func TestRemoveGroupLinux(t *testing.T) {
 	}
 
 	defer func() {
-		x.remove()
+		assert.NotPanics(func() { x.remove() }, "x.remove() %s", x)
 	}()
 
-	assert.NotPanics(func() { x.Run(action.Create) })
+	assert.NotPanics(func() { x.Run(action.Create) }, "action.Create %s")
 	assert.NotPanics(func() { x.Run(action.Remove) })
 	assert.Regexp(`.*group test.*remove.*(run)`, buf.String())
 	_, err := user.LookupGroup(x.Name)

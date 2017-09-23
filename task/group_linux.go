@@ -1,13 +1,23 @@
 package task
 
-import "time"
+import (
+	"time"
 
-func createGroup(g Group) error {
-	_, err := ExecCmd(time.Second*10, "groupadd", g.Name)
-	return err
+	"github.com/mschenk42/gopack/action"
+)
+
+func createGroup(g Group) {
+	Command{
+		Name:    "groupadd",
+		Args:    []string{g.Name},
+		Timeout: time.Second * 10,
+	}.Run(action.Run)
 }
 
-func removeGroup(g Group) error {
-	_, err := ExecCmd(time.Second*10, "groupdel", g.Name)
-	return err
+func removeGroup(g Group) {
+	Command{
+		Name:    "groupdel",
+		Args:    []string{g.Name},
+		Timeout: time.Second * 10,
+	}.Run(action.Run)
 }

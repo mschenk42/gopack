@@ -1,7 +1,9 @@
 package action
 
+import "fmt"
+
 const (
-	Add Enum = iota
+	Add Name = iota
 	Create
 	Disable
 	Enable
@@ -22,7 +24,7 @@ const (
 )
 
 var (
-	names = map[Enum]string{
+	names = map[Name]string{
 		Add:     "add",
 		Create:  "create",
 		Disable: "disable",
@@ -44,29 +46,29 @@ var (
 	}
 )
 
-type Enum int
-type Methods map[Enum]MethodFunc
-type MethodFunc func() (bool, error)
+type Name int
+type Func func() (bool, error)
+type Funcs map[Name]Func
 
-func (a Enum) name() (string, bool) {
+func (a Name) name() (string, bool) {
 	x, found := names[a]
 	return x, found
 }
 
-func (a Enum) String() string {
+func (a Name) String() string {
 	x, found := a.name()
 	if !found {
-		x = "UNKNOWN ACTION"
+		x = fmt.Sprintf("Unknown action %s", a)
 	}
 	return x
 }
 
-func (m Methods) Method(a Enum) (MethodFunc, bool) {
+func (m Funcs) Func(a Name) (Func, bool) {
 	x, found := m[a]
 	return x, found
 }
 
 // NewSlice is a helper method for creating action slices
-func NewSlice(a ...Enum) []Enum {
+func NewSlice(a ...Name) []Name {
 	return a
 }

@@ -10,16 +10,13 @@
 // with this software. If not, see // <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 // Provides symmetric authenticated encryption using 256-bit AES-GCM with a random nonce.
-package task
+package cryptopasta
 
 import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"encoding/base64"
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"io"
 )
 
@@ -32,20 +29,6 @@ func NewEncryptionKey() *[32]byte {
 		panic(err)
 	}
 	return &key
-}
-
-func EncodeEncryptionKey(b *[32]byte) string {
-	return hex.EncodeToString(b[:])
-}
-
-func DecodeEncryptionKey(s string) (*[32]byte, error) {
-	k := [32]byte{}
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		return &k, err
-	}
-	copy(k[:], b)
-	return &k, nil
 }
 
 // Encrypt encrypts data using 256-bit AES-GCM.  This both hides the content of
@@ -94,56 +77,4 @@ func Decrypt(ciphertext []byte, key *[32]byte) (plaintext []byte, err error) {
 		ciphertext[gcm.NonceSize():],
 		nil,
 	)
-}
-
-func EncryptText(text, encryptionKey string) ([]byte, error) {
-	var key = &[32]byte{}
-
-	if encryptionKey == "" {
-		key = NewEncryptionKey()
-	} else {
-		var err error
-		key, err = DecodeEncryptionKey(encryptionKey)
-		if err != nil {
-			return []byte{}, fmt.Errorf("error decoding encryptiong key, %s", err)
-		}
-	}
-
-	encrypted, err := Encrypt([]byte(text), key)
-	if err != nil {
-		return []byte{}, fmt.Errorf("error encrypting text, %s", err)
-	}
-
-	return encrypted, nil
-}
-
-func DecryptText(encrypted, encryptionKey string) (string, error) {
-	if encryptionKey == "" {
-		return "", errors.New("encryption key is blank")
-	}
-
-	byteKey, err := DecodeEncryptionKey(encryptionKey)
-	if err != nil {
-		return "", fmt.Errorf("error decoding encryptiong key, %s", err)
-	}
-
-	b, err := hex.DecodeString(encrypted)
-	if err != nil {
-		return "", fmt.Errorf("error decoding value, %s", err)
-	}
-
-	decrypted, err := Decrypt(b, byteKey)
-	if err != nil {
-		return "", fmt.Errorf("error decrypting value, %s", err)
-	}
-
-	return string(decrypted), nil
-}
-
-func Base64ToHex(s string) (string, error) {
-	b, err := base64.StdEncoding.DecodeString(s)
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }

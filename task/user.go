@@ -17,13 +17,13 @@ type User struct {
 	gopack.BaseTask
 }
 
-func (u User) Run(runActions ...action.Enum) gopack.ActionRunStatus {
+func (u User) Run(runActions ...action.Name) gopack.ActionRunStatus {
 	u.setDefaults()
 	return u.RunActions(&u, u.registerActions(), runActions)
 }
 
-func (u User) registerActions() action.Methods {
-	return action.Methods{
+func (u User) registerActions() action.Funcs {
+	return action.Funcs{
 		action.Create: u.create,
 		action.Remove: u.remove,
 	}
@@ -44,9 +44,7 @@ func (u User) create() (bool, error) {
 			return false, err
 		}
 	}
-	if err := createUser(u); err != nil {
-		return false, err
-	}
+	createUser(u)
 	return true, nil
 }
 
@@ -54,8 +52,6 @@ func (u User) remove() (bool, error) {
 	if _, err := user.Lookup(u.Name); err != nil {
 		return false, err
 	}
-	if err := removeUser(u); err != nil {
-		return false, err
-	}
+	removeUser(u)
 	return true, nil
 }

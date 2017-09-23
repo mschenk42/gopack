@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,7 +12,7 @@ import (
 	"github.com/mschenk42/gopack/task"
 )
 
-func encrypt(kv, encryptionKey, propertyFile string, base64Key bool) error {
+func encrypt(kv, encryptionKey, propertyFile string, base64Encoded bool) error {
 	parts := strings.Split(kv, "=")
 	if len(parts) != 2 {
 		return fmt.Errorf("key value pair %s not valid", kv)
@@ -21,19 +20,7 @@ func encrypt(kv, encryptionKey, propertyFile string, base64Key bool) error {
 	key := parts[0]
 	value := parts[1]
 
-	if base64Key {
-		var err error
-		encryptionKey, err = task.Base64ToHex(encryptionKey)
-		if err != nil {
-			return fmt.Errorf("unable to convert encryption key for base64 to hex, %s", err)
-		}
-	}
-
-	if encryptionKey == "" {
-		encryptionKey = task.EncodeEncryptionKey(task.NewEncryptionKey())
-	}
-
-	encrypted, err := task.EncryptText(value, encryptionKey)
+	encrypted, encryptionKey, err := task.Encrypt(value, encryptionKey, base64Encoded)
 	if err != nil {
 		return err
 	}
@@ -41,7 +28,7 @@ func encrypt(kv, encryptionKey, propertyFile string, base64Key bool) error {
 	if propertyFile != "" {
 
 		if !strings.HasSuffix(propertyFile, ".json") {
-			return fmt.Errorf("unable to update property file %s, file does not have extension json", propertyFile)
+			return fmt.Errorf("%s does not have json extension", propertyFile)
 		}
 
 		p := &gopack.Properties{}
@@ -71,9 +58,7 @@ func encrypt(kv, encryptionKey, propertyFile string, base64Key bool) error {
 				return err
 			}
 			defer f2.Close()
-
-			x, err := io.Copy(f2, bytes.NewBuffer(b))
-			fmt.Println("number bytes written", x)
+			_, err = io.Copy(f2, bytes.NewBuffer(b))
 			if err != nil {
 				return err
 			}
@@ -87,30 +72,13 @@ func encrypt(kv, encryptionKey, propertyFile string, base64Key bool) error {
 		defer f.Close()
 
 		// set password and save property file
-		(*p)[key] = hex.EncodeToString(encrypted)
+		(*p)[key] = encrypted
 		err = p.Save(f)
 		if err != nil {
 			return err
 		}
 	}
 
-	fmt.Printf("\n%s: %s\nencryption key: %s\n", key, hex.EncodeToString(encrypted), encryptionKey)
-	return nil
-}
-
-func decrypt(encrypted, encryptionKey, propertyFile string, base64Key bool) error {
-	if base64Key {
-		var err error
-		encryptionKey, err = task.Base64ToHex(encryptionKey)
-		if err != nil {
-			return fmt.Errorf("unable to convert encryption key for base64 to hex, %s", err)
-		}
-
-	}
-	v, err := task.DecryptText(encrypted, encryptionKey)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("\n%s\n", v)
+	fmt.Printf("\n%s: %s\nencryption key: %s\n", key, encrypted, encryptionKey)
 	return nil
 }

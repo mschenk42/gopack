@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/mschenk42/gopack"
 	"github.com/mschenk42/gopack/action"
@@ -30,4 +31,20 @@ func TestCommandStream(t *testing.T) {
 	assert.Regexp(`.*command.*echo.*hello.*run.*(started)`, buf.String())
 	assert.Regexp(`.*command.*echo.*hello.*run.*(has run)`, buf.String())
 	fmt.Print(buf.String())
+}
+
+func TestExecCmdStreamFunc(t *testing.T) {
+	assert := assert.New(t)
+
+	buf := &bytes.Buffer{}
+	assert.NoError(execCmdStream(buf, 1*time.Second, "echo", "hello"))
+	assert.Equal("hello\n", buf.String())
+}
+
+func TestExecCmdFunc(t *testing.T) {
+	assert := assert.New(t)
+
+	b, err := execCmd(1*time.Second, "echo", "hello")
+	assert.NoError(err)
+	assert.Equal("hello\n", string(b))
 }

@@ -29,10 +29,10 @@ func TestCreateUserLinux(t *testing.T) {
 	}
 
 	defer func() {
-		x.remove()
+		assert.NotPanics(func() { x.remove() }, "x.remove() %s", x)
 	}()
 
-	assert.NotPanics(func() { x.Run(action.Create) })
+	assert.NotPanics(func() { x.Run(action.Create) }, "action.Create %s", x)
 	assert.Regexp(`.*user test.*create.*(run)`, buf.String())
 	_, err := user.Lookup(x.Name)
 	assert.NoError(err)
@@ -55,11 +55,11 @@ func TestRemoveUserLinux(t *testing.T) {
 	}
 
 	defer func() {
-		x.remove()
+		assert.NotPanics(func() { x.remove() }, "x.remove() %s", x)
 	}()
 
-	assert.NotPanics(func() { x.Run(action.Create) })
-	assert.NotPanics(func() { x.Run(action.Remove) })
+	assert.NotPanics(func() { x.Run(action.Create) }, "action.Create %s", x)
+	assert.NotPanics(func() { x.Run(action.Remove) }, "action.Remove %s", x)
 	assert.Regexp(`.*user test.*remove.*(run)`, buf.String())
 	_, err := user.Lookup(x.Name)
 	assert.NotNil(err)
