@@ -72,7 +72,7 @@ func (b BaseTask) RunActions(task Task, regActions action.Funcs, runActions []ac
 		return runStatus
 	}
 
-	if canRun, reason = b.canRun(); !canRun {
+	if canRun, reason = b.canRun(task, runActions, timeStart); !canRun {
 		b.logSkipped(task, runActions, reason, timeStart)
 		indentLevel -= 1
 		return runStatus
@@ -91,7 +91,7 @@ func (b BaseTask) RunActions(task Task, regActions action.Funcs, runActions []ac
 				b.notifyTasks(a)
 			}
 		} else {
-			b.handleTaskError(err)
+			b.logError(task, action.NewSlice(a), err, timeStart)
 		}
 		if indentLevel == 1 {
 			Log.Println()
@@ -136,7 +136,7 @@ func (b BaseTask) notifyTasks(action action.Name) {
 	}
 }
 
-func (b BaseTask) canRun() (bool, string) {
+func (b BaseTask) canRun(task Task, a []action.Name, t time.Time) (bool, string) {
 	var (
 		err    error
 		run    bool = true
@@ -145,23 +145,25 @@ func (b BaseTask) canRun() (bool, string) {
 	if b.OnlyIf != nil {
 		reason = "due to only_if"
 		run, err = b.OnlyIf()
-		b.handleTaskError(err)
+		b.logError(task, a, err, t)
 	}
 	if b.NotIf != nil {
 		reason = "due to not_if"
 		run, err = b.NotIf()
 		run = !run
-		b.handleTaskError(err)
+		b.logError(task, a, err, t)
 	}
 	return run, reason
 }
 
 var (
-	logStartFmt     = color.Cyan("%s%s: %s (%s)")
-	logErrHeaderFmt = color.Red("%s%s: %s (%s) %s")
-	logRunFmt       = color.Cyan("%s%s: %s (%s) %s")
-	logErrFmt       = color.Red("%s! %s")
-	logInfoFmt      = "%s%s"
+	logStartFmt      = color.Cyan("%s%s: %s (%s)")
+	logErrHeaderFmt  = color.Red("%s%s: %s (%s) %s")
+	logWarnHeaderFmt = color.Yellow("%s%s: %s (%s) %s")
+	logRunFmt        = color.Cyan("%s%s: %s (%s) %s")
+	logErrFmt        = color.Red("%s! %s")
+	logWarnFmt       = color.Yellow("%s~ %s")
+	logInfoFmt       = "%s%s"
 )
 
 func logIndent() string {
@@ -212,18 +214,14 @@ func (b BaseTask) logSkipped(task Task, a []action.Name, reason string, t time.T
 }
 
 func (b BaseTask) logError(task Task, a []action.Name, err error, t time.Time) {
-	Log.Printf(logErrHeaderFmt, logIndent(), task, a, "error", time.Since(t))
-	b.handleTaskError(err)
-}
-
-func (b BaseTask) handleTaskError(err error) {
 	if err == nil {
 		return
 	}
 	if b.ContOnError {
+		Log.Printf(logWarnHeaderFmt, logIndent(), task, a, "warn", time.Since(t))
 		lines := strings.Split(err.Error(), "\n")
 		for _, s := range lines {
-			Log.Printf(logErrFmt, logIndent(), s)
+			Log.Printf(logWarnFmt, logIndent(), s)
 		}
 	} else {
 		Log.Panicf(logErrFmt, logIndent(), err)

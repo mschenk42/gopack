@@ -51,6 +51,20 @@ func Blue(s string) string {
 	return s
 }
 
+func YellowBold(s string) string {
+	if isTerminal() {
+		return fmt.Sprintf(colorFormat, 1, 33, s)
+	}
+	return s
+}
+
+func Yellow(s string) string {
+	if isTerminal() {
+		return fmt.Sprintf(colorFormat, 0, 33, s)
+	}
+	return s
+}
+
 func CyanBold(s string) string {
 	if isTerminal() {
 		return fmt.Sprintf(colorFormat, 1, 36, s)
