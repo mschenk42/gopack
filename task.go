@@ -224,6 +224,7 @@ func (b BaseTask) logError(task Task, a []action.Name, err error, t time.Time) {
 			Log.Printf(logWarnFmt, logIndent(), s)
 		}
 	} else {
+		Log.Printf(logErrHeaderFmt, logIndent(), task, a, "error", time.Since(t))
 		Log.Panicf(logErrFmt, logIndent(), err)
 	}
 }
