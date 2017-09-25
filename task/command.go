@@ -13,10 +13,11 @@ import (
 
 // Command runs commands via exec.Command
 type Command struct {
-	Name    string
-	Args    []string
-	Stream  bool
-	Timeout time.Duration
+	Name      string
+	Args      []string
+	Stream    bool
+	Sensitive bool
+	Timeout   time.Duration
 
 	gopack.BaseTask
 }
@@ -41,13 +42,16 @@ func (c *Command) setDefaults() {
 
 // String returns a string which identifies the task with it's property values
 func (c Command) String() string {
+	if c.Sensitive {
+		return fmt.Sprintf("command %s %v", c.Name, Redact(c.Args...))
+	}
 	return fmt.Sprintf("command %s %v", c.Name, c.Args)
 }
 
 func (c Command) run() (bool, error) {
 	if c.Stream {
 		if err := execCmdStream(gopack.NewTaskInfoWriter(), c.Timeout, c.Name, c.Args...); err != nil {
-			return false, fmt.Errorf("unable to execute %s %+v, %s", c.Name, c.Args, err)
+			return false, fmt.Errorf("unable to execute %s, %s", c, err)
 		}
 	} else {
 		b, err := execCmd(c.Timeout, c.Name, c.Args...)

@@ -38,7 +38,11 @@ func encrypt(kv, encryptionKey, propertyFile string, base64Encoded bool) error {
 			if err != nil {
 				return err
 			}
-			defer f1.Close()
+			defer func() {
+				if err := f1.Close(); err != nil {
+					panic(err)
+				}
+			}()
 
 			b, err := ioutil.ReadAll(f1)
 			if err != nil {
@@ -57,7 +61,12 @@ func encrypt(kv, encryptionKey, propertyFile string, base64Encoded bool) error {
 			if err != nil {
 				return err
 			}
-			defer f2.Close()
+			defer func() {
+				if err := f2.Close(); err != nil {
+					panic(err)
+				}
+			}()
+
 			_, err = io.Copy(f2, bytes.NewBuffer(b))
 			if err != nil {
 				return err
@@ -69,7 +78,11 @@ func encrypt(kv, encryptionKey, propertyFile string, base64Encoded bool) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				panic(err)
+			}
+		}()
 
 		// set password and save property file
 		(*p)[key] = encrypted

@@ -37,12 +37,12 @@ func (u User) String() string {
 }
 
 func (u User) create() (bool, error) {
-	if _, err := user.Lookup(u.Name); err == nil {
+	var err error
+	if _, err = user.Lookup(u.Name); err == nil {
 		return false, nil
-	} else {
-		if !strings.Contains(err.Error(), "unknown user") {
-			return false, err
-		}
+	}
+	if !strings.Contains(err.Error(), "unknown user") {
+		return false, err
 	}
 	createUser(u)
 	return true, nil

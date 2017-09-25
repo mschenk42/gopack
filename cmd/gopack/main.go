@@ -60,7 +60,9 @@ func main() {
 		if len(os.Args) < 3 {
 			onErrorGenerate(fmt.Errorf("file path not provided"))
 		}
-		generateCommand.Parse(os.Args[2:])
+		if err := generateCommand.Parse(os.Args[2:]); err != nil {
+			onErrorGenerate(err)
+		}
 		switch *typeToGenerate {
 		case "task":
 			if err := generateTask(*typeName, generateCommand.Arg(0), false); err != nil {
@@ -81,7 +83,9 @@ func main() {
 		if len(os.Args) < 3 {
 			onErrorEncrypt(fmt.Errorf("key=value to encrypt not provided"))
 		}
-		encryptCommand.Parse(os.Args[2:])
+		if err := encryptCommand.Parse(os.Args[2:]); err != nil {
+			onErrorEncrypt(err)
+		}
 		if err := encrypt(encryptCommand.Arg(0), *encryptKeyEncrypt, *propertyFileEncrypt, *base64KeyEncrypt); err != nil {
 			onErrorEncrypt(err)
 		}
@@ -93,7 +97,9 @@ func main() {
 		if len(os.Args) < 3 {
 			onErrorDecrypt(fmt.Errorf("key to unencrypt not provided"))
 		}
-		decryptCommand.Parse(os.Args[2:])
+		if err := decryptCommand.Parse(os.Args[2:]); err != nil {
+			onErrorDecrypt(err)
+		}
 		if err := decrypt(decryptCommand.Arg(0), *decryptKeyDecrypt, *base64KeyDecrypt); err != nil {
 			onErrorDecrypt(err)
 		}
