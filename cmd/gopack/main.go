@@ -75,7 +75,7 @@ func main() {
 				os.Exit(1)
 			}
 		default:
-			fmt.Fprintln(os.Stderr, fmt.Sprintf("%s is not a valid type to generate\n", *typeToGenerate))
+			fmt.Fprintln(os.Stderr, fmt.Sprintf("%s is not a valid type to generaten", *typeToGenerate))
 		}
 
 	case "encrypt":
