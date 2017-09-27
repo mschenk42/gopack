@@ -1,162 +1,118 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/mschenk42/gopack/color"
 )
 
 const generateUsage = `
-generate gopack packs and task
-usage: gopack generate --type [pack|task] --name <string> file-path
+usage: gopack generate --type <pack|task> --name <name> <file>
 `
 const encryptUsage = `
-encrypt property values with AES-256 using hex or base64 encoding
-usage: gopack encrypt --key <string> --file <json file> --base64 key=value
+usage: gopack encrypt --key <key> --file <file> --base64 <key=value>
 `
 const decryptUsage = `
-decrypt property values with AES-256 using hex or base64 encoding
-usage: gopack decrypt --key <string> --base64 encypted-value
+usage: gopack decrypt --key <key> --base64 <encypted string>
 `
 
 var (
-	help = flag.Bool("help", false, "general help")
+	generateFlags  = flag.NewFlagSet("generate", flag.ContinueOnError)
+	typeToGenerate = generateFlags.String("type", "task", "generate a task or pack")
+	typeName       = generateFlags.String("name", "", "task or pack name, defaults to path's base dir or file name")
 
-	generateCommand = flag.NewFlagSet("generate", flag.ExitOnError)
-	helpGenerate    = generateCommand.Bool("help", false, "generate command help")
-	typeToGenerate  = generateCommand.String("type", "task", "task or pack")
-	typeName        = generateCommand.String("name", "", "name of generated task or pack(defaults to path's base dir or file name)")
+	encryptFlags     = flag.NewFlagSet("encrypt", flag.ContinueOnError)
+	fileEncrypt      = encryptFlags.String("file", "", "property file to add encrypted value")
+	keyEncrypt       = encryptFlags.String("key", "", "key to use for encryption")
+	base64KeyEncrypt = encryptFlags.Bool("base64", false, "key is base64 encoded otherwise defaults to hex encoding")
 
-	encryptCommand      = flag.NewFlagSet("encrypt", flag.ExitOnError)
-	helpEncrypt         = encryptCommand.Bool("help", false, "encrypt command help")
-	propertyFileEncrypt = encryptCommand.String("file", "", "property file to update/add encrypted value")
-	encryptKeyEncrypt   = encryptCommand.String("key", "", "key to use for encryption, defaults to hexadecimal encoded")
-	base64KeyEncrypt    = encryptCommand.Bool("base64", false, "key is base64 encoded")
-
-	decryptCommand    = flag.NewFlagSet("decrypt", flag.ExitOnError)
-	helpDecrypt       = decryptCommand.Bool("help", false, "decrypt command help")
-	decryptKeyDecrypt = decryptCommand.String("key", "", "key to use for decryption, defaults to hexadecimal encoded")
-	base64KeyDecrypt  = decryptCommand.Bool("base64", false, "key is base64 encoded")
+	decryptFlags     = flag.NewFlagSet("decrypt", flag.ContinueOnError)
+	keyDecrypt       = decryptFlags.String("key", "", "key to use for decryption")
+	base64KeyDecrypt = decryptFlags.Bool("base64", false, "key is base64 encoded otherwise defaults to hex encoding")
 )
 
 func main() {
-	if *help {
-		onError(nil)
+	generateFlags.Usage = func() {
+		fmt.Fprintln(os.Stderr, generateUsage)
+		generateFlags.PrintDefaults()
 	}
 
-	if len(os.Args) < 2 {
-		onError(errors.New("no subcommand provided"))
+	encryptFlags.Usage = func() {
+		fmt.Fprintln(os.Stderr, encryptUsage)
+		encryptFlags.PrintDefaults()
 	}
 
-	switch os.Args[1] {
+	decryptFlags.Usage = func() {
+		fmt.Fprintln(os.Stderr, decryptUsage)
+		decryptFlags.PrintDefaults()
+	}
+
+	command := ""
+	if len(os.Args) >= 2 {
+		command = os.Args[1]
+	}
+
+	switch command {
 	case "generate":
-		if *helpGenerate {
-			onErrorGenerate(nil)
+		if err := generateFlags.Parse(os.Args[2:]); err != nil {
+			os.Exit(1)
 		}
 		if len(os.Args) < 3 {
-			onErrorGenerate(fmt.Errorf("file path not provided"))
-		}
-		if err := generateCommand.Parse(os.Args[2:]); err != nil {
-			onErrorGenerate(err)
+			fmt.Fprintln(os.Stderr, "file path not provided")
+			generateFlags.Usage()
+			os.Exit(1)
 		}
 		switch *typeToGenerate {
 		case "task":
-			if err := generateTask(*typeName, generateCommand.Arg(0), false); err != nil {
-				onErrorGenerate(err)
+			if err := generateTask(*typeName, generateFlags.Arg(0), false); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 		case "pack":
-			if err := generatePack(*typeName, generateCommand.Arg(0), false); err != nil {
-				onErrorGenerate(err)
+			if err := generatePack(*typeName, generateFlags.Arg(0), false); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
 			}
 		default:
-			onErrorGenerate(fmt.Errorf("%s not valid", *typeToGenerate))
+			fmt.Fprintln(os.Stderr, fmt.Sprintf("%s is not a valid type to generate\n", *typeToGenerate))
 		}
 
 	case "encrypt":
-		if *helpEncrypt {
-			onErrorEncrypt(nil)
+		if err := encryptFlags.Parse(os.Args[2:]); err != nil {
+			os.Exit(1)
 		}
 		if len(os.Args) < 3 {
-			onErrorEncrypt(fmt.Errorf("key=value to encrypt not provided"))
+			fmt.Fprintln(os.Stderr, "key=value to encrypt not provided")
+			encryptFlags.Usage()
+			os.Exit(1)
 		}
-		if err := encryptCommand.Parse(os.Args[2:]); err != nil {
-			onErrorEncrypt(err)
-		}
-		if err := encrypt(encryptCommand.Arg(0), *encryptKeyEncrypt, *propertyFileEncrypt, *base64KeyEncrypt); err != nil {
-			onErrorEncrypt(err)
+		if err := encrypt(encryptFlags.Arg(0), *keyEncrypt, *fileEncrypt, *base64KeyEncrypt); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
 		}
 
 	case "decrypt":
-		if *helpDecrypt {
-			onErrorDecrypt(nil)
+		if err := decryptFlags.Parse(os.Args[2:]); err != nil {
+			os.Exit(1)
 		}
 		if len(os.Args) < 3 {
-			onErrorDecrypt(fmt.Errorf("key to unencrypt not provided"))
+			fmt.Fprintln(os.Stderr, "key to decyrpt not provided")
+			decryptFlags.Usage()
+			os.Exit(1)
 		}
-		if err := decryptCommand.Parse(os.Args[2:]); err != nil {
-			onErrorDecrypt(err)
-		}
-		if err := decrypt(decryptCommand.Arg(0), *decryptKeyDecrypt, *base64KeyDecrypt); err != nil {
-			onErrorDecrypt(err)
+		if err := decrypt(decryptFlags.Arg(0), *keyDecrypt, *base64KeyDecrypt); err != nil {
+			os.Exit(1)
 		}
 
 	default:
-		onError(nil)
+		m := fmt.Sprintf("%s is not a valid command", command)
+		if command == "" {
+			m = "no command provided"
+		}
+		fmt.Fprintln(os.Stderr, m)
+		os.Exit(1)
 	}
-}
-
-func onError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, color.Red("%s"), err)
-		fmt.Println()
-	}
-	fmt.Fprint(os.Stderr, generateUsage)
-	fmt.Println()
-	generateCommand.PrintDefaults()
-	fmt.Fprint(os.Stderr, encryptUsage)
-	fmt.Println()
-	encryptCommand.PrintDefaults()
-	fmt.Fprint(os.Stderr, decryptUsage)
-	fmt.Println()
-	decryptCommand.PrintDefaults()
-	os.Exit(1)
-}
-
-func onErrorGenerate(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, color.Red("%s"), err)
-		fmt.Println()
-	}
-	fmt.Fprint(os.Stderr, generateUsage)
-	fmt.Println()
-	generateCommand.PrintDefaults()
-	os.Exit(1)
-}
-
-func onErrorEncrypt(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, color.Red("%s"), err)
-		fmt.Println()
-	}
-	fmt.Fprint(os.Stderr, encryptUsage)
-	fmt.Println()
-	encryptCommand.PrintDefaults()
-	os.Exit(1)
-}
-
-func onErrorDecrypt(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, color.Red("%s"), err)
-		fmt.Println()
-	}
-	fmt.Fprint(os.Stderr, decryptUsage)
-	fmt.Println()
-	decryptCommand.PrintDefaults()
-	os.Exit(1)
 }
 
 func confirm(prompt string) bool {
