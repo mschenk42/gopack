@@ -57,13 +57,13 @@ type {{$receiver}} struct {
 }
 
 // Run initializes default property values and delegates to BaseTask RunActions method
-func ({{$arg}} {{$receiver}}) Run(runActions ...action.Enum) gopack.ActionRunStatus {
+func ({{$arg}} {{$receiver}}) Run(runActions ...action.Name) gopack.ActionRunStatus {
 	{{$arg}}.setDefaults()
 	return {{$arg}}.RunActions(&{{$arg}}, {{$arg}}.registerActions(), runActions)
 }
 
-func ({{$arg}} {{$receiver}}) registerActions() action.Methods {
-	return action.Methods{
+func ({{$arg}} {{$receiver}}) registerActions() action.Funcs {
+	return action.Funcs {
 		action.Create: {{$arg}}.create,
 	}
 }
@@ -154,8 +154,8 @@ func generateTask(name, path string, force bool) error {
 	basePath := filepath.Base(filepath.Dir(p))
 	if name == "" {
 		name = strings.Split(filepath.Base(p), ".")[0]
-		name = fmt.Sprintf("%s%s", strings.ToUpper(name[0:1]), strings.ToLower(name[1:]))
 	}
+	name = fmt.Sprintf("%s%s", strings.ToUpper(name[0:1]), strings.ToLower(name[1:]))
 
 	funcMap := template.FuncMap{
 		"ToLower": strings.ToLower,
