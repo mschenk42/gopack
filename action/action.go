@@ -4,12 +4,16 @@ import "fmt"
 
 const (
 	Add Name = iota
+	Copy
 	Create
 	Disable
+	Down
+	Download
 	Enable
 	Install
 	Lock
 	Nil
+	Move
 	Nothing
 	Reload
 	Remove
@@ -19,30 +23,36 @@ const (
 	Stop
 	Touch
 	Unlock
+	Up
 	Update
 	Upgrade
 )
 
 var (
 	names = map[Name]string{
-		Add:     "add",
-		Create:  "create",
-		Disable: "disable",
-		Enable:  "enable",
-		Install: "install",
-		Lock:    "lock",
-		Nil:     "nil",
-		Nothing: "nothing",
-		Reload:  "reload",
-		Remove:  "remove",
-		Restart: "restart",
-		Run:     "run",
-		Start:   "start",
-		Stop:    "stop",
-		Touch:   "touch",
-		Unlock:  "unlock",
-		Update:  "update",
-		Upgrade: "upgrade",
+		Add:      "add",
+		Copy:     "copy",
+		Create:   "create",
+		Disable:  "disable",
+		Down:     "down",
+		Download: "download",
+		Enable:   "enable",
+		Install:  "install",
+		Lock:     "lock",
+		Move:     "move",
+		Nil:      "nil",
+		Nothing:  "nothing",
+		Reload:   "reload",
+		Remove:   "remove",
+		Restart:  "restart",
+		Run:      "run",
+		Start:    "start",
+		Stop:     "stop",
+		Touch:    "touch",
+		Unlock:   "unlock",
+		Up:       "up",
+		Update:   "update",
+		Upgrade:  "upgrade",
 	}
 )
 
