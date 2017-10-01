@@ -10,9 +10,10 @@ import (
 )
 
 type User struct {
-	Name  string
-	Group string
-	Home  string
+	Name   string
+	Group  string
+	Groups []string
+	Home   string
 
 	gopack.BaseTask
 }
