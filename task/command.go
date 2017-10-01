@@ -15,6 +15,8 @@ import (
 type Command struct {
 	Name      string
 	Args      []string
+	Env       []string
+	Dir       string
 	Stream    bool
 	Sensitive bool
 	Timeout   time.Duration
@@ -50,11 +52,11 @@ func (c Command) String() string {
 
 func (c Command) run() (bool, error) {
 	if c.Stream {
-		if err := execCmdStream(gopack.NewTaskInfoWriter(), c.Timeout, c.Name, c.Args...); err != nil {
+		if err := execCmdStream(gopack.NewTaskInfoWriter(), c.Timeout, c.Name, c.Env, c.Dir, c.Args...); err != nil {
 			return false, fmt.Errorf("unable to execute %s, %s", c, err)
 		}
 	} else {
-		b, err := execCmd(c.Timeout, c.Name, c.Args...)
+		b, err := execCmd(c.Timeout, c.Name, c.Env, c.Dir, c.Args...)
 		if err != nil {
 			return false, err
 		}
@@ -65,11 +67,15 @@ func (c Command) run() (bool, error) {
 	return true, nil
 }
 
-func execCmd(timeout time.Duration, command string, args ...string) ([]byte, error) {
+func execCmd(timeout time.Duration, command string, env []string, wd string, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, command, args...)
+	cmd.Env = env
+	if wd != "" {
+		cmd.Dir = wd
+	}
 	b, err := cmd.CombinedOutput()
 	if err != nil {
 		return b, err
@@ -80,12 +86,16 @@ func execCmd(timeout time.Duration, command string, args ...string) ([]byte, err
 	return b, nil
 }
 
-func execCmdStream(w io.Writer, timeout time.Duration, command string, args ...string) error {
+func execCmdStream(w io.Writer, timeout time.Duration, command string, env []string, wd string, args ...string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Stdout = w
 	cmd.Stderr = w
+	cmd.Env = env
+	if wd != "" {
+		cmd.Dir = wd
+	}
 	return cmd.Run()
 }
