@@ -31,7 +31,7 @@ func (f *Func) setDefaults() {
 
 // String returns a string which identifies the task with it's property values
 func (f Func) String() string {
-	return fmt.Sprintf("func %s", f.ActionFunc)
+	return fmt.Sprintf("func %p", f.ActionFunc)
 }
 
 func (f Func) run() (bool, error) {
