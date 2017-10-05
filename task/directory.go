@@ -15,7 +15,7 @@ type Directory struct {
 	Path  string
 	Owner string
 	Group string
-	Mode  os.FileMode
+	Perm  os.FileMode
 
 	gopack.BaseTask
 }
@@ -33,13 +33,13 @@ func (d Directory) registerActions() action.Funcs {
 }
 
 func (d *Directory) setDefaults() {
-	if d.Mode == 0 {
-		d.Mode = 0755
+	if d.Perm == 0 {
+		d.Perm = 0755
 	}
 }
 
 func (d Directory) String() string {
-	return fmt.Sprintf("directory %s %s %s %s", d.Path, d.Owner, d.Group, d.Mode)
+	return fmt.Sprintf("directory %s %s %s %s", d.Path, d.Owner, d.Group, d.Perm)
 }
 
 func (d Directory) create() (bool, error) {
@@ -57,12 +57,12 @@ func (d Directory) create() (bool, error) {
 	}
 	if !found {
 		chgDirectory = true
-		if err = os.MkdirAll(d.Path, d.Mode); err != nil {
+		if err = os.MkdirAll(d.Path, d.Perm); err != nil {
 			return false, err
 		}
 	} else {
-		if fi.Mode().Perm() != d.Mode.Perm() {
-			os.Chmod(d.Path, d.Mode)
+		if fi.Mode().Perm() != d.Perm.Perm() {
+			os.Chmod(d.Path, d.Perm)
 			chgMode = true
 		}
 	}
@@ -70,7 +70,7 @@ func (d Directory) create() (bool, error) {
 	if d.Owner == "" && d.Group == "" {
 		return chgDirectory || chgOwnership || chgMode, nil
 	}
-	if chgOwnership, err = chown(d.Path, d.Owner, d.Group); err != nil {
+	if chgOwnership, err = Chown(d.Path, d.Owner, d.Group); err != nil {
 		return false, err
 	}
 	return chgDirectory || chgOwnership || chgMode, nil
@@ -92,7 +92,7 @@ func (d Directory) remove() (bool, error) {
 	return true, err
 }
 
-func chown(path, owner, group string) (bool, error) {
+func Chown(path, owner, group string) (bool, error) {
 	var (
 		err      error
 		u        *user.User

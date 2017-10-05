@@ -22,7 +22,7 @@ func TestCreateDirectory(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-		Mode: 0755,
+		Perm: 0755,
 	}.Run(action.Create)
 	defer os.Remove(testDir)
 
@@ -46,7 +46,7 @@ func TestCreateExistingDirectory(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-		Mode: 0755,
+		Perm: 0755,
 	}.Run(action.Create)
 
 	_, err = os.Stat(testDir)

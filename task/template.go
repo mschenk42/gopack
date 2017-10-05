@@ -19,7 +19,7 @@ type Template struct {
 	Path   string
 	Owner  string
 	Group  string
-	Mode   os.FileMode
+	Perm   os.FileMode
 
 	gopack.BaseTask
 }
@@ -36,13 +36,13 @@ func (t Template) registerActions() action.Funcs {
 }
 
 func (t *Template) setDefaults() {
-	if t.Mode == 0 {
-		t.Mode = 0755
+	if t.Perm == 0 {
+		t.Perm = 0755
 	}
 }
 
 func (t Template) String() string {
-	return fmt.Sprintf("template %s %s %s %s %s", t.Name, t.Path, t.Owner, t.Group, t.Mode)
+	return fmt.Sprintf("template %s %s %s %s %s", t.Name, t.Path, t.Owner, t.Group, t.Perm)
 }
 
 func (t Template) create() (bool, error) {
@@ -77,13 +77,13 @@ func (t Template) create() (bool, error) {
 		checkSumDiff = sumt != sumf
 	}
 	if !fileExists || checkSumDiff {
-		if err = ioutil.WriteFile(t.Path, bt.Bytes(), t.Mode); err != nil {
+		if err = ioutil.WriteFile(t.Path, bt.Bytes(), t.Perm); err != nil {
 			return false, err
 		}
 		chgTemplate = true
 	} else {
-		if fi.Mode().Perm() != t.Mode.Perm() {
-			os.Chmod(t.Path, t.Mode)
+		if fi.Mode().Perm() != t.Perm.Perm() {
+			os.Chmod(t.Path, t.Perm)
 			chgMode = true
 		}
 	}
@@ -92,7 +92,7 @@ func (t Template) create() (bool, error) {
 	if t.Owner == "" && t.Group == "" {
 		return chgTemplate || chgOwnership || chgMode, nil
 	}
-	if chgOwnership, err = chown(t.Path, t.Owner, t.Group); err != nil {
+	if chgOwnership, err = Chown(t.Path, t.Owner, t.Group); err != nil {
 		return chgTemplate || chgOwnership || chgMode, err
 	} else {
 		return chgTemplate || chgOwnership || chgMode, nil

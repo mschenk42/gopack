@@ -20,7 +20,7 @@ func TestCreateTemplate(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-		Mode: 0755,
+		Perm: 0755,
 	}.Run(action.Create)
 	defer func() { os.RemoveAll(testDir) }()
 
@@ -29,7 +29,7 @@ func TestCreateTemplate(t *testing.T) {
 	Template{
 		Name: "mypack",
 		Path: fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode: 0755,
+		Perm: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
@@ -51,7 +51,7 @@ func TestUpToDateTemplate(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-		Mode: 0755,
+		Perm: 0755,
 	}.Run(action.Create)
 	defer func() { os.RemoveAll(testDir) }()
 
@@ -60,7 +60,7 @@ func TestUpToDateTemplate(t *testing.T) {
 	Template{
 		Name: "mypack",
 		Path: fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode: 0755,
+		Perm: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
@@ -69,7 +69,7 @@ func TestUpToDateTemplate(t *testing.T) {
 	Template{
 		Name: "mypack",
 		Path: fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode: 0755,
+		Perm: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
@@ -91,7 +91,7 @@ func TestChangedTemplate(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-		Mode: 0755,
+		Perm: 0755,
 	}.Run(action.Create)
 	defer func() { os.RemoveAll(testDir) }()
 
@@ -100,7 +100,7 @@ func TestChangedTemplate(t *testing.T) {
 	Template{
 		Name: "mypack",
 		Path: fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode: 0755,
+		Perm: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
@@ -111,7 +111,7 @@ func TestChangedTemplate(t *testing.T) {
 	Template{
 		Name: "mypack",
 		Path: fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode: 0755,
+		Perm: 0755,
 
 		Source: `log_dir: {{ index . "nginx.log_dir"}}`,
 		Props:  props,
@@ -137,14 +137,14 @@ func TestModeChangedTemplate(t *testing.T) {
 
 	Directory{
 		Path: testDir,
-		Mode: 0755,
+		Perm: 0755,
 	}.Run(action.Create)
 	defer func() { os.RemoveAll(testDir) }()
 
 	Template{
 		Name:   "mypack",
 		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode:   0755,
+		Perm:   0755,
 		Source: `log_dir:`,
 	}.Run(action.Create)
 	assert.Regexp(`.*-rwxr-xr-x:.*`, buf.String())
@@ -152,7 +152,7 @@ func TestModeChangedTemplate(t *testing.T) {
 	Template{
 		Name:   "mypack",
 		Path:   fmt.Sprintf("%s/mypack.conf", testDir),
-		Mode:   0775,
+		Perm:   0775,
 		Source: `log_dir:`,
 	}.Run(action.Create)
 
