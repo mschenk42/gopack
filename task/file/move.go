@@ -14,7 +14,7 @@ import (
 type Move struct {
 	From  string
 	To    string
-	User  string
+	Owner string
 	Group string
 	Perm  os.FileMode
 
@@ -38,7 +38,7 @@ func (m *Move) setDefaults() {
 
 // String returns a string which identifies the task with it's property values
 func (m Move) String() string {
-	return fmt.Sprintf("move %s %s %s %s %s", m.From, m.To, m.User, m.Group, m.Perm)
+	return fmt.Sprintf("move %s %s %s %s %s", m.From, m.To, m.Owner, m.Group, m.Perm)
 }
 
 func (m Move) run() (bool, error) {
@@ -56,7 +56,7 @@ func (m Move) run() (bool, error) {
 	if err := ioutil.WriteFile(m.To, b, m.Perm); err != nil {
 		return false, err
 	}
-	if _, err := task.Chown(m.To, m.User, m.Group); err != nil {
+	if _, err := task.Chown(m.To, m.Owner, m.Group); err != nil {
 		return false, err
 	}
 	if err := os.Remove(m.From); err != nil {
