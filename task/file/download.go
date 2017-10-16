@@ -8,6 +8,7 @@ import (
 
 	"github.com/mschenk42/gopack"
 	"github.com/mschenk42/gopack/action"
+	"github.com/mschenk42/gopack/task"
 )
 
 // Download ...
@@ -42,7 +43,7 @@ func (d Download) String() string {
 }
 
 func (d Download) create() (bool, error) {
-	out, err := os.Create(d.Path)
+	out, err := os.OpenFile(d.Path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, d.Perm)
 	if err != nil {
 		return false, err
 	}
@@ -56,6 +57,10 @@ func (d Download) create() (bool, error) {
 
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
+		return false, err
+	}
+
+	if _, err := task.Chown(d.Path, d.Owner, d.Group); err != nil {
 		return false, err
 	}
 	return true, nil
