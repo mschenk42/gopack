@@ -41,6 +41,8 @@ func TestStringType(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(true, p.Exists("string"))
 	assert.Equal("val", p.Str("string"))
+	assert.NotPanics(func() { p.StrRequired("string") })
+	assert.Panics(func() { p.StrRequired("invalid") })
 }
 
 func TestFloat64Type(t *testing.T) {
@@ -51,6 +53,8 @@ func TestFloat64Type(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(true, p.Exists("float"))
 	assert.Equal(0.1, p.Float("float"))
+	assert.NotPanics(func() { p.FloatRequired("float") })
+	assert.Panics(func() { p.FloatRequired("invalid") })
 }
 
 func TestIntType(t *testing.T) {
@@ -61,6 +65,8 @@ func TestIntType(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(true, p.Exists("int"))
 	assert.Equal(1, p.Int("int"))
+	assert.NotPanics(func() { p.IntRequired("int") })
+	assert.Panics(func() { p.IntRequired("invalid") })
 }
 
 func TestMapType(t *testing.T) {
@@ -71,6 +77,8 @@ func TestMapType(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(true, p.Exists("map"))
 	assert.Equal(map[string]interface{}{"key1": "val1", "key2": "val2"}, p.Map("map"))
+	assert.NotPanics(func() { p.MapRequired("map") })
+	assert.Panics(func() { p.MapRequired("invalid") })
 }
 
 func TestSliceType(t *testing.T) {
@@ -81,6 +89,8 @@ func TestSliceType(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(true, p.Exists("array"))
 	assert.Equal([]interface{}{"val1", "val2"}, p.Slice("array"))
+	assert.NotPanics(func() { p.SliceRequired("array") })
+	assert.Panics(func() { p.SliceRequired("invalid") })
 }
 
 func TestBoolType(t *testing.T) {
@@ -91,6 +101,8 @@ func TestBoolType(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(true, p.Exists("bool"))
 	assert.Equal(true, p.Bool("bool"))
+	assert.NotPanics(func() { p.BoolRequired("bool") })
+	assert.Panics(func() { p.BoolRequired("invalid") })
 }
 
 func TestNilType(t *testing.T) {

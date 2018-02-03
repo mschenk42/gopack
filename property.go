@@ -2,6 +2,7 @@ package gopack
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -45,50 +46,128 @@ func (p *Properties) Exists(key string) bool {
 
 func (p *Properties) Str(key string) string {
 	v, found := (*p)[key]
-	if found && v != nil {
-		return v.(string)
+	if !found || v == nil {
+		return ""
 	}
-	return ""
+	x, _ := v.(string)
+	return x
+}
+
+func (p *Properties) StrRequired(key string) string {
+	v, found := (*p)[key]
+	if !found || v == nil {
+		panic(fmt.Sprintf("unable to convert %s to string", key))
+	}
+	x, ok := v.(string)
+	if !ok {
+		panic(fmt.Sprintf("unable to convert %s to string", key))
+	}
+	return x
 }
 
 func (p *Properties) Float(key string) float64 {
 	v, found := (*p)[key]
-	if found && v != nil {
-		return v.(float64)
+	if !found || v == nil {
+		return 0
 	}
-	return 0
+	x, _ := v.(float64)
+	return x
+}
+
+func (p *Properties) FloatRequired(key string) float64 {
+	v, found := (*p)[key]
+	if !found || v == nil {
+		panic(fmt.Sprintf("unable to convert %s to float", key))
+	}
+	x, ok := v.(float64)
+	if !ok {
+		panic(fmt.Sprintf("unable to convert %s to float", key))
+	}
+	return x
 }
 
 func (p *Properties) Int(key string) int {
 	v, found := (*p)[key]
-	if found && v != nil {
-		return int(v.(float64))
+	if !found || v == nil {
+		return 0
 	}
-	return 0
+	x, _ := v.(float64)
+	return int(x)
+}
+
+func (p *Properties) IntRequired(key string) int {
+	v, found := (*p)[key]
+	if !found || v == nil {
+		panic(fmt.Sprintf("unable to convert %s to int", key))
+	}
+	x, ok := v.(float64)
+	if !ok {
+		panic(fmt.Sprintf("unable to convert %s to int", key))
+	}
+	return int(x)
 }
 
 func (p *Properties) Map(key string) map[string]interface{} {
 	v, found := (*p)[key]
-	if found && v != nil {
-		return v.(map[string]interface{})
+	if !found || v == nil {
+		return map[string]interface{}{}
 	}
-	return map[string]interface{}{}
+	x, _ := v.(map[string]interface{})
+	return x
+}
+
+func (p *Properties) MapRequired(key string) map[string]interface{} {
+	v, found := (*p)[key]
+	if !found || v == nil {
+		panic(fmt.Sprintf("unable to convert %s to map", key))
+	}
+	x, ok := v.(map[string]interface{})
+	if !ok {
+		panic(fmt.Sprintf("unable to convert %s to map", key))
+	}
+	return x
 }
 
 func (p *Properties) Slice(key string) []interface{} {
 	v, found := (*p)[key]
-	if found && v != nil {
-		return v.([]interface{})
+	if !found || v == nil {
+		return []interface{}{}
 	}
-	return []interface{}{}
+	x, _ := v.([]interface{})
+	return x
+}
+
+func (p *Properties) SliceRequired(key string) []interface{} {
+	v, found := (*p)[key]
+	if !found || v == nil {
+		panic(fmt.Sprintf("unable to convert %s to slice", key))
+	}
+	x, ok := v.([]interface{})
+	if !ok {
+		panic(fmt.Sprintf("unable to convert %s to slice", key))
+	}
+	return x
 }
 
 func (p *Properties) Bool(key string) bool {
 	v, found := (*p)[key]
-	if found && v != nil {
-		return v.(bool)
+	if !found || v == nil {
+		return false
 	}
-	return false
+	x, _ := v.(bool)
+	return x
+}
+
+func (p *Properties) BoolRequired(key string) bool {
+	v, found := (*p)[key]
+	if !found || v == nil {
+		panic(fmt.Sprintf("unable to convert %s to boolean", key))
+	}
+	x, ok := v.(bool)
+	if !ok {
+		panic(fmt.Sprintf("unable to convert %s to boolean", key))
+	}
+	return x
 }
 
 func (p *Properties) Load(r io.Reader) error {
