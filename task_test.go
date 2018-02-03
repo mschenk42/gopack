@@ -32,6 +32,23 @@ func TestRunTask(t *testing.T) {
 	fmt.Print(buf.String())
 }
 
+func TestRunTaskDefaultAction(t *testing.T) {
+	assert := assert.New(t)
+
+	saveLogger := Log
+	buf := &bytes.Buffer{}
+	Log = log.New(buf, "", 0)
+	defer func() { Log = saveLogger }()
+
+	t1 := Task1{
+		Name: "task1",
+	}
+
+	assert.NotPanics(func() { t1.Run() })
+	assert.Regexp(fmt.Sprintf(`task1.*create.*%s`, passKeywords), buf.String())
+	fmt.Print(buf.String())
+}
+
 func TestGuards(t *testing.T) {
 	assert := assert.New(t)
 
@@ -95,8 +112,8 @@ func TestContOnError(t *testing.T) {
 	Log = log.New(buf, "", 0)
 	defer func() { Log = saveLogger }()
 
-	t1 := Task1{
-		Name: "task1",
+	t1 := Task2{
+		Name: "task2",
 		BaseTask: BaseTask{
 			ContOnError: true},
 	}

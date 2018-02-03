@@ -66,10 +66,18 @@ func (b BaseTask) RunActions(task Task, regActions action.Funcs, runActions []ac
 
 	indentLevel += 1
 
-	if len(runActions) == 0 {
+	// if there are more than one registered actions and no run action given
+	if len(runActions) == 0 && len(regActions) != 1 {
 		b.logError(task, action.NewSlice(action.Nil), fmt.Errorf("unable to run, no action given"), timeStart)
 		indentLevel -= 1
 		return runStatus
+	}
+
+	// default runAction if not specified and  there is only one registered action that can be run
+	if len(runActions) == 0 && len(regActions) == 1 {
+		for k, _ := range regActions {
+			runActions = append(runActions, k)
+		}
 	}
 
 	if canRun, reason = b.canRun(task, runActions, timeStart); !canRun {
