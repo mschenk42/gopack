@@ -77,11 +77,11 @@ func execCmd(timeout time.Duration, command string, env []string, wd string, arg
 		cmd.Dir = wd
 	}
 	b, err := cmd.CombinedOutput()
-	if err != nil {
-		return b, err
-	}
 	if ctx.Err() == context.DeadlineExceeded {
 		return b, ctx.Err()
+	}
+	if err != nil {
+		return b, err
 	}
 	return b, nil
 }

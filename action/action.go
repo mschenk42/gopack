@@ -68,7 +68,7 @@ func (a Name) name() (string, bool) {
 func (a Name) String() string {
 	x, found := a.name()
 	if !found {
-		x = fmt.Sprintf("Unknown action %s", a)
+		x = fmt.Sprintf("Unknown action %d", a)
 	}
 	return x
 }
