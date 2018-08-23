@@ -38,7 +38,7 @@ func (c *Copy) setDefaults() {
 
 // String returns a string which identifies the task with it's property values
 func (c Copy) String() string {
-	return fmt.Sprintf("move %s %s %s %s %s", c.From, c.To, c.Owner, c.Group, c.Perm)
+	return fmt.Sprintf("copy %s %s %s %s %s", c.From, c.To, c.Owner, c.Group, c.Perm)
 }
 
 func (c Copy) run() (bool, error) {
